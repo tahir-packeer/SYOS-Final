@@ -20,13 +20,13 @@ public class StockAppService {
     private final WebsiteInventoryRepository websiteInventoryRepository;
     private final TransactionManager transactionManager;
     private final Logger logger;
-    
+
     public StockAppService(ItemRepository itemRepository,
-                          StockBatchRepository stockBatchRepository,
-                          ShelfStockRepository shelfStockRepository,
-                          WebsiteInventoryRepository websiteInventoryRepository,
-                          TransactionManager transactionManager,
-                          Logger logger) {
+            StockBatchRepository stockBatchRepository,
+            ShelfStockRepository shelfStockRepository,
+            WebsiteInventoryRepository websiteInventoryRepository,
+            TransactionManager transactionManager,
+            Logger logger) {
         this.itemRepository = itemRepository;
         this.stockBatchRepository = stockBatchRepository;
         this.shelfStockRepository = shelfStockRepository;
@@ -34,35 +34,35 @@ public class StockAppService {
         this.transactionManager = transactionManager;
         this.logger = logger;
     }
-    
+
     /**
      * Receive new stock batch.
      */
-    public StockBatch receiveStock(String itemCode, int quantity, 
-                                  LocalDate purchaseDate, LocalDate expiryDate) {
+    public StockBatch receiveStock(String itemCode, int quantity,
+            LocalDate purchaseDate, LocalDate expiryDate) {
         return transactionManager.executeInTransaction(conn -> {
             try {
                 Optional<Item> itemOpt = itemRepository.findByCode(new ItemCode(itemCode));
-                
+
                 if (itemOpt.isEmpty()) {
                     throw new IllegalArgumentException("Item not found: " + itemCode);
                 }
-                
+
                 Item item = itemOpt.get();
                 StockBatch batch = new StockBatch(item, quantity, purchaseDate, expiryDate);
-                
+
                 StockBatch savedBatch = stockBatchRepository.save(batch);
                 logger.info("Received stock batch: " + quantity + " units of " + item.getName());
-                
+
                 return savedBatch;
-                
+
             } catch (Exception e) {
                 logger.error("Error receiving stock", e);
                 throw new RuntimeException("Failed to receive stock", e);
             }
         });
     }
-    
+
     /**
      * Move stock from batches to shelf.
      * Implements FEFO (First Expired First Out) strategy with fallback to FIFO.
@@ -71,109 +71,167 @@ public class StockAppService {
         transactionManager.executeInTransaction(conn -> {
             try {
                 ItemCode code = new ItemCode(itemCode);
-                
+
                 // Get all batches for this item, ordered
                 List<StockBatch> batches = stockBatchRepository.findByItemCodeOrderedByDate(code);
-                
+
                 if (batches.isEmpty()) {
                     throw new IllegalArgumentException("No stock batches available for: " + itemCode);
                 }
-                
+
                 // Apply shelving strategy
                 List<StockBatch> batchesToUse = selectBatchesForShelving(batches, quantityToMove);
-                
+
                 int remainingQty = quantityToMove;
-                
+
+                logger.info("Processing " + batchesToUse.size() + " batches for quantity: " + quantityToMove);
                 for (StockBatch batch : batchesToUse) {
                     int qtyFromBatch = Math.min(remainingQty, batch.getQuantityRemaining());
+                    logger.info("Taking " + qtyFromBatch + " units from batch " + batch.getBatchId());
                     batch.reduceStock(qtyFromBatch);
                     stockBatchRepository.update(batch);
+                    logger.info("Batch " + batch.getBatchId() + " updated successfully");
                     remainingQty -= qtyFromBatch;
-                    
-                    if (remainingQty == 0) break;
+
+                    if (remainingQty == 0)
+                        break;
                 }
-                
+                logger.info("Batch processing completed");
+
                 // Update shelf stock
+                logger.info("Updating shelf stock for item: " + itemCode);
                 Optional<ShelfStock> shelfStockOpt = shelfStockRepository.findByItemCode(code);
-                
+
                 if (shelfStockOpt.isPresent()) {
                     ShelfStock shelfStock = shelfStockOpt.get();
+                    logger.info("Found existing shelf stock, current quantity: " + shelfStock.getQuantity());
                     shelfStock.addStock(quantityToMove);
+                    logger.info("Updated shelf stock quantity to: " + shelfStock.getQuantity());
                     shelfStockRepository.update(shelfStock);
+                    logger.info("Shelf stock update completed");
                 } else {
+                    logger.info("No existing shelf stock found, creating new entry");
                     Optional<Item> itemOpt = itemRepository.findByCode(code);
                     if (itemOpt.isPresent()) {
                         ShelfStock newShelfStock = new ShelfStock(itemOpt.get(), quantityToMove);
                         shelfStockRepository.save(newShelfStock);
+                        logger.info("New shelf stock entry created");
+                    } else {
+                        throw new IllegalArgumentException("Item not found: " + itemCode);
                     }
                 }
-                
+
                 logger.info("Moved " + quantityToMove + " units to shelf for item: " + itemCode);
                 return null;
-                
+
             } catch (Exception e) {
                 logger.error("Error moving stock to shelf", e);
                 throw new RuntimeException("Failed to move stock to shelf", e);
             }
         });
     }
-    
+
     /**
-     * Strategy pattern - Select batches for shelving.
-     * Priority: Expiring soon > Oldest batch (FIFO).
+     * Strategy pattern - Select batches for shelving according to CCCP1 requirement
+     * 2b.
+     * Primary rule: Use oldest batch (FIFO).
+     * Exception rule: When expiry date of a newer batch is closer than the oldest
+     * batch, choose the newer batch.
      */
-    private List<StockBatch> selectBatchesForShelving(List<StockBatch> allBatches, 
-                                                      int quantityNeeded) {
+    private List<StockBatch> selectBatchesForShelving(List<StockBatch> allBatches,
+            int quantityNeeded) {
         List<StockBatch> result = new ArrayList<>();
-        
-        // Find batches with expiry dates
-        List<StockBatch> withExpiry = allBatches.stream()
-            .filter(b -> b.getExpiryDate() != null && b.getQuantityRemaining() > 0)
-            .sorted(Comparator.comparing(StockBatch::getExpiryDate))
-            .toList();
-        
-        // Find batches without expiry dates
-        List<StockBatch> withoutExpiry = allBatches.stream()
-            .filter(b -> b.getExpiryDate() == null && b.getQuantityRemaining() > 0)
-            .sorted(Comparator.comparing(StockBatch::getPurchaseDate))
-            .toList();
-        
+
+        // Filter available batches with stock remaining, sorted by purchase date
+        // (oldest first)
+        List<StockBatch> availableBatches = allBatches.stream()
+                .filter(b -> b.getQuantityRemaining() > 0)
+                .sorted(Comparator.comparing(StockBatch::getPurchaseDate))
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        if (availableBatches.isEmpty()) {
+            throw new IllegalArgumentException("No stock batches available");
+        }
+
         int remaining = quantityNeeded;
-        
-        // First, check if any batch is expiring soon (within 30 days)
-        LocalDate soonThreshold = LocalDate.now().plusDays(30);
-        
-        for (StockBatch batch : withExpiry) {
-            if (batch.getExpiryDate().isBefore(soonThreshold)) {
-                result.add(batch);
-                remaining -= batch.getQuantityRemaining();
-                if (remaining <= 0) return result;
-            }
+
+        while (remaining > 0 && !availableBatches.isEmpty()) {
+            StockBatch selectedBatch = selectNextBatchForShelving(availableBatches);
+
+            result.add(selectedBatch);
+            remaining -= selectedBatch.getQuantityRemaining();
+
+            // Remove the selected batch from available batches for next iteration
+            availableBatches.remove(selectedBatch);
         }
-        
-        // Then use oldest batches without expiry
-        for (StockBatch batch : withoutExpiry) {
-            result.add(batch);
-            remaining -= batch.getQuantityRemaining();
-            if (remaining <= 0) return result;
-        }
-        
-        // Finally, use remaining batches with expiry
-        for (StockBatch batch : withExpiry) {
-            if (!result.contains(batch)) {
-                result.add(batch);
-                remaining -= batch.getQuantityRemaining();
-                if (remaining <= 0) return result;
-            }
-        }
-        
+
         if (remaining > 0) {
-            throw new IllegalArgumentException("Insufficient stock in batches");
+            throw new IllegalArgumentException("Insufficient stock in batches. Need " + quantityNeeded +
+                    " but only " + (quantityNeeded - remaining) + " available.");
         }
-        
+
         return result;
     }
-    
+
+    /**
+     * Selects the next batch for shelving according to CCCP1 requirement 2b.
+     * Implementation of the business rule:
+     * "The stock should be reduced from the oldest batch of items and put on the
+     * shelf.
+     * However, when the expiry date of another set is closer than the one in the
+     * oldest
+     * batch of items, the newer batch is chosen to stock the SYOS shelves."
+     */
+    private StockBatch selectNextBatchForShelving(List<StockBatch> availableBatches) {
+        if (availableBatches.isEmpty()) {
+            throw new IllegalArgumentException("No available batches to select from");
+        }
+
+        // Start with the oldest batch (FIFO principle)
+        StockBatch oldestBatch = availableBatches.get(0);
+
+        // If oldest batch has no expiry date, use it (no comparison possible)
+        if (oldestBatch.getExpiryDate() == null) {
+            logger.info("Selected oldest batch (ID: " + oldestBatch.getBatchId() +
+                    ", purchased: " + oldestBatch.getPurchaseDate() +
+                    ", no expiry date) - FIFO principle");
+            return oldestBatch;
+        }
+
+        // Look through all batches to find one with closer expiry date than the oldest
+        StockBatch selectedBatch = oldestBatch;
+        LocalDate closestExpiryDate = oldestBatch.getExpiryDate();
+
+        for (StockBatch batch : availableBatches) {
+            // Skip batches without expiry dates
+            if (batch.getExpiryDate() == null) {
+                continue;
+            }
+
+            // If this batch expires sooner than our current selection, choose it
+            if (batch.getExpiryDate().isBefore(closestExpiryDate)) {
+                selectedBatch = batch;
+                closestExpiryDate = batch.getExpiryDate();
+            }
+        }
+
+        // Log the selection reason
+        if (selectedBatch.equals(oldestBatch)) {
+            logger.info("Selected oldest batch (ID: " + oldestBatch.getBatchId() +
+                    ", purchased: " + oldestBatch.getPurchaseDate() +
+                    ", expires: " + oldestBatch.getExpiryDate() + ") - FIFO principle");
+        } else {
+            logger.info("Selected batch with closer expiry (ID: " + selectedBatch.getBatchId() +
+                    ", purchased: " + selectedBatch.getPurchaseDate() +
+                    ", expires: " + selectedBatch.getExpiryDate() +
+                    ") over oldest batch (ID: " + oldestBatch.getBatchId() +
+                    ", purchased: " + oldestBatch.getPurchaseDate() +
+                    ", expires: " + oldestBatch.getExpiryDate() + ") - Expiry priority rule");
+        }
+
+        return selectedBatch;
+    }
+
     /**
      * Get items below reorder level.
      */
@@ -185,7 +243,7 @@ public class StockAppService {
             throw new RuntimeException("Failed to get reorder items", e);
         }
     }
-    
+
     /**
      * Get all stock batches.
      */
@@ -195,6 +253,18 @@ public class StockAppService {
         } catch (Exception e) {
             logger.error("Error getting stock batches", e);
             throw new RuntimeException("Failed to get stock batches", e);
+        }
+    }
+
+    /**
+     * Get all shelf stock.
+     */
+    public List<ShelfStock> getAllShelfStock() {
+        try {
+            return shelfStockRepository.findAll();
+        } catch (Exception e) {
+            logger.error("Error getting shelf stock", e);
+            throw new RuntimeException("Failed to get shelf stock", e);
         }
     }
 }

@@ -132,7 +132,7 @@ public class EnhancedCashierView extends ConsoleView {
             // Step 3: Apply Discount
             System.out.println("\n--- Discount ---");
 
-            String discountInput = getInput("Discount Amount (LKR) [Enter for none]: ");
+            String discountInput = getInput("Discount Amount (Rs) [Enter for none]: ");
             double discountAmount = 0.0;
             if (!discountInput.isEmpty()) {
                 try {
@@ -172,7 +172,7 @@ public class EnhancedCashierView extends ConsoleView {
             double cashAmount;
             while (true) {
                 try {
-                    cashAmount = Double.parseDouble(getInput("Cash Tendered (LKR): "));
+                    cashAmount = Double.parseDouble(getInput("Cash Tendered (Rs): "));
                     if (cashAmount >= preview.getTotal().getAmount().doubleValue()) {
                         break;
                     } else {
@@ -192,7 +192,7 @@ public class EnhancedCashierView extends ConsoleView {
                 displaySuccess("\nSALE COMPLETED!");
                 double change = cashAmount - preview.getTotal().getAmount().doubleValue();
                 if (change > 0) {
-                    System.out.printf("Change: LKR %.2f\n", change);
+                    System.out.printf("Change: Rs %.2f\n", change);
                 }
                 System.out.println("Bill printed and saved.");
 

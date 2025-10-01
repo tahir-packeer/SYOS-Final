@@ -234,7 +234,7 @@ public class ManagerView extends ConsoleView {
         try {
             String name = getInput("Item Name: ");
             String code = getInput("Item Code: ");
-            double price = Double.parseDouble(getInput("Unit Price (LKR): "));
+            double price = Double.parseDouble(getInput("Unit Price (Rs): "));
             double discount = Double.parseDouble(getInput("Discount (%): "));
             int reorderLevel = getIntInput("Reorder Level: ");
 

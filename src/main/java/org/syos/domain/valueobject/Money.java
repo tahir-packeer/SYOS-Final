@@ -15,7 +15,7 @@ import java.util.Objects;
  * - Uses BigDecimal for precision
  */
 public final class Money {
-    private static final String CURRENCY = "LKR";
+    private static final String CURRENCY = "Rs";
     private static final int SCALE = 2;
     private final BigDecimal amount;
     

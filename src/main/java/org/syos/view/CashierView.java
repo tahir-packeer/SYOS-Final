@@ -98,7 +98,7 @@ public class CashierView extends ConsoleView {
             // Get discount
             System.out.println("\nTotal items in cart: " + orderItems.size());
             System.out.println("\n--- DISCOUNT ---");
-            String discountInput = getInput("Manual Discount Amount (LKR) [Press Enter for no discount]: ");
+            String discountInput = getInput("Discount Amount (Rs) [Press Enter for no discount]: ");
             double discountAmount = 0.0;
             if (!discountInput.isEmpty()) {
                 try {
@@ -114,7 +114,7 @@ public class CashierView extends ConsoleView {
             }
 
             // Get payment
-            double cashAmount = Double.parseDouble(getInput("Cash Tendered (LKR): "));
+            double cashAmount = Double.parseDouble(getInput("Cash Tendered (Rs): "));
 
             // Process through controller
             boolean success = controller.processCounterSale(orderItems, customerName, cashAmount, discountAmount);
