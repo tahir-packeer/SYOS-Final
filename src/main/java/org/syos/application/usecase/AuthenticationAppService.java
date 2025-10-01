@@ -5,52 +5,46 @@ import org.syos.application.repository.UserRepository;
 import org.syos.application.service.Logger;
 import org.syos.domain.entity.User;
 import org.syos.domain.valueobject.Password;
-import org.syos.infrastructure.util.PasswordHasher;
 import java.util.Optional;
 
 /**
- * Application service for user authentication.
+ * Application service for user authentication (simplified version).
  * Facade pattern - simplifies authentication workflow.
  * Follows Single Responsibility Principle.
  */
 public class AuthenticationAppService {
     private final UserRepository userRepository;
-    private final PasswordHasher passwordHasher;
     private final Logger logger;
-    
-    // Constructor injection for Dependency Inversion
-    public AuthenticationAppService(UserRepository userRepository, 
-                                    PasswordHasher passwordHasher, 
-                                    Logger logger) {
+
+    // Constructor injection for Dependency Inversion (simplified)
+    public AuthenticationAppService(UserRepository userRepository, Logger logger) {
         this.userRepository = userRepository;
-        this.passwordHasher = passwordHasher;
         this.logger = logger;
     }
-    
+
     /**
-     * Authenticate user with username and password.
+     * Authenticate user with username and password (simplified - plain text
+     * comparison).
      */
     public Optional<User> login(String username, String plainPassword) {
         try {
             Optional<User> userOpt = userRepository.findByUsername(username);
-            
+
             if (userOpt.isEmpty()) {
                 logger.warn("Login attempt for non-existent user: " + username);
                 return Optional.empty();
             }
-            
+
             User user = userOpt.get();
-            
+
             if (!user.isActive()) {
                 logger.warn("Login attempt for inactive user: " + username);
                 return Optional.empty();
             }
-            
-            boolean passwordValid = passwordHasher.verify(
-                plainPassword, 
-                user.getPassword().getHashedValue()
-            );
-            
+
+            // Simple plain text password comparison
+            boolean passwordValid = user.getPassword().matches(plainPassword);
+
             if (passwordValid) {
                 logger.info("Successful login for user: " + username);
                 return Optional.of(user);
@@ -58,32 +52,32 @@ public class AuthenticationAppService {
                 logger.warn("Failed login attempt for user: " + username);
                 return Optional.empty();
             }
-            
+
         } catch (Exception e) {
             logger.error("Error during login for user: " + username, e);
             return Optional.empty();
         }
     }
-    
+
     /**
-     * Change user password.
+     * Change user password (simplified - plain text storage).
      */
     public boolean changePassword(String username, String oldPassword, String newPassword) {
         try {
             Optional<User> userOpt = login(username, oldPassword);
-            
+
             if (userOpt.isEmpty()) {
                 return false;
             }
-            
+
             User user = userOpt.get();
-            String hashedPassword = passwordHasher.hash(newPassword);
-            user.setPassword(new Password(hashedPassword));
-            
+            // Store new password as plain text
+            user.setPassword(new Password(newPassword));
+
             userRepository.update(user);
             logger.info("Password changed for user: " + username);
             return true;
-            
+
         } catch (Exception e) {
             logger.error("Error changing password for user: " + username, e);
             return false;

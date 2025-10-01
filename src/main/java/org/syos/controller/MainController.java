@@ -17,46 +17,46 @@ public class MainController {
     private final CashierController cashierController;
     private final ManagerController managerController;
     private User currentUser;
-    
+
     public MainController(Scanner scanner,
-                         AuthenticationAppService authService,
-                         CashierController cashierController,
-                         ManagerController managerController) {
+            AuthenticationAppService authService,
+            CashierController cashierController,
+            ManagerController managerController) {
         this.scanner = scanner;
         this.authService = authService;
         this.cashierController = cashierController;
         this.managerController = managerController;
     }
-    
+
     /**
      * Main application loop.
      */
     public void run() {
         MenuView menuView = new MenuView(scanner);
         menuView.display();
-        
+
         boolean running = true;
-        
+
         while (running) {
             // Login
             String[] credentials = menuView.getLoginCredentials();
             String username = credentials[0];
             String password = credentials[1];
-            
+
             Optional<User> userOpt = authService.login(username, password);
-            
+
             if (userOpt.isPresent()) {
                 currentUser = userOpt.get();
-                menuView.displayLoginSuccess(currentUser.getFullName(), 
-                    currentUser.getRole().getDisplayName());
-                
+                menuView.displayLoginSuccess(currentUser.getFullName(),
+                        currentUser.getRole().getDisplayName());
+
                 // Route to appropriate view based on role
                 routeToRoleView();
-                
+
             } else {
                 menuView.displayLoginFailure();
             }
-            
+
             // Ask to continue or exit
             System.out.print("\nDo you want to login again? (Y/N): ");
             String choice = scanner.nextLine().trim();
@@ -64,10 +64,10 @@ public class MainController {
                 running = false;
             }
         }
-        
+
         System.out.println("\nThank you for using SYOS-POS System!");
     }
-    
+
     /**
      * Route user to appropriate view based on role.
      */
@@ -75,12 +75,12 @@ public class MainController {
         if (currentUser == null) {
             return;
         }
-        
+
         UserRole role = currentUser.getRole();
-        
+
         switch (role) {
             case CASHIER:
-                CashierView cashierView = new CashierView(scanner, cashierController);
+                EnhancedCashierView cashierView = new EnhancedCashierView(scanner, cashierController);
                 cashierView.display();
                 break;
             case MANAGER:
@@ -92,7 +92,7 @@ public class MainController {
                 System.out.println("Invalid user role");
                 break;
         }
-        
+
         currentUser = null; // Logout
     }
 }

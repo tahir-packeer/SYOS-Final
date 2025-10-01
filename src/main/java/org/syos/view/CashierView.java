@@ -10,27 +10,27 @@ import java.util.Scanner;
  */
 public class CashierView extends ConsoleView {
     private final CashierController controller;
-    
+
     public CashierView(Scanner scanner, CashierController controller) {
         super(scanner);
         this.controller = controller;
     }
-    
+
     @Override
     public void display() {
         boolean running = true;
-        
+
         while (running) {
             String[] options = {
-                "Process Sale",
-                "View Items",
-                "Check Stock",
-                "View Today's Sales Report",
-                "Logout"
+                    "Process Sale",
+                    "View Items",
+                    "Check Stock",
+                    "View Today's Sales Report",
+                    "Logout"
             };
-            
+
             int choice = displayMenu("CASHIER MENU", options);
-            
+
             switch (choice) {
                 case 1:
                     processSale();
@@ -54,28 +54,27 @@ public class CashierView extends ConsoleView {
             }
         }
     }
-    
+
     /**
      * Process a sale transaction.
      */
     private void processSale() {
         displayHeader("PROCESS SALE");
-        
+
         try {
             // Get customer name
             String customerName = getInput("Customer Name (optional, press Enter to skip): ");
             if (customerName.isEmpty()) {
                 customerName = "Walk-in Customer";
             }
-            
+
             // Get items
-            java.util.List<org.syos.application.usecase.BillingAppService.OrderItem> orderItems = 
-                new java.util.ArrayList<>();
-            
+            java.util.List<org.syos.application.usecase.BillingAppService.OrderItem> orderItems = new java.util.ArrayList<>();
+
             boolean addingItems = true;
             while (addingItems) {
                 String itemCode = getInput("\nEnter Item Code (or 'done' to finish): ");
-                
+
                 if (itemCode.equalsIgnoreCase("done")) {
                     if (orderItems.isEmpty()) {
                         displayError("Must add at least one item");
@@ -84,39 +83,55 @@ public class CashierView extends ConsoleView {
                     addingItems = false;
                 } else {
                     int quantity = getIntInput("Enter Quantity: ");
-                    
+
                     if (quantity <= 0) {
                         displayError("Quantity must be positive");
                         continue;
                     }
-                    
+
                     orderItems.add(new org.syos.application.usecase.BillingAppService.OrderItem(
-                        itemCode, quantity
-                    ));
+                            itemCode, quantity));
                     displaySuccess("Added to cart");
                 }
             }
-            
-            // Get payment
+
+            // Get discount
             System.out.println("\nTotal items in cart: " + orderItems.size());
+            System.out.println("\n--- DISCOUNT ---");
+            String discountInput = getInput("Manual Discount Amount (LKR) [Press Enter for no discount]: ");
+            double discountAmount = 0.0;
+            if (!discountInput.isEmpty()) {
+                try {
+                    discountAmount = Double.parseDouble(discountInput);
+                    if (discountAmount < 0) {
+                        displayError("Discount amount cannot be negative. Setting to 0.");
+                        discountAmount = 0.0;
+                    }
+                } catch (NumberFormatException e) {
+                    displayError("Invalid discount amount. Setting to 0.");
+                    discountAmount = 0.0;
+                }
+            }
+
+            // Get payment
             double cashAmount = Double.parseDouble(getInput("Cash Tendered (LKR): "));
-            
+
             // Process through controller
-            boolean success = controller.processCounterSale(orderItems, customerName, cashAmount);
-            
+            boolean success = controller.processCounterSale(orderItems, customerName, cashAmount, discountAmount);
+
             if (success) {
                 displaySuccess("Sale completed successfully!");
             } else {
                 displayError("Sale failed. Please try again.");
             }
-            
+
         } catch (Exception e) {
             displayError("Error processing sale: " + e.getMessage());
         }
-        
+
         pause();
     }
-    
+
     /**
      * View all items.
      */
@@ -125,7 +140,7 @@ public class CashierView extends ConsoleView {
         controller.displayAllItems();
         pause();
     }
-    
+
     /**
      * Check stock levels.
      */
@@ -135,7 +150,7 @@ public class CashierView extends ConsoleView {
         controller.checkItemStock(itemCode);
         pause();
     }
-    
+
     /**
      * View today's sales report.
      */

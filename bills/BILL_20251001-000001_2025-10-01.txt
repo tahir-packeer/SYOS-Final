@@ -1,0 +1,29 @@
+
+=====================================
+        SYNEX OUTLET STORE           
+         Colombo, Sri Lanka          
+         Tel: +94-11-1234567         
+=====================================
+
+Bill Serial No: 20251001-000001
+Date: 2025-10-01 19:40:38
+Transaction Type: Counter
+Customer: Mahmood
+
+-------------------------------------
+Item                   Qty      Price        Total
+-------------------------------------
+Eggs (10 pack)           5 LKR 350.00  LKR 1662.50
+-------------------------------------
+Subtotal:                             LKR 1662.50
+Discount:                               LKR 10.00
+TOTAL:                                LKR 1652.50
+
+Payment Method: Cash
+Cash Tendered:                        LKR 2000.00
+Change:                                LKR 347.50
+
+=====================================
+    Thank you for shopping with us!  
+=====================================
+

@@ -4,35 +4,46 @@ package org.syos.domain.valueobject;
 import java.util.Objects;
 
 /**
- * Value object encapsulating hashed password.
+ * Simple password value object with plain text storage.
  */
 public final class Password {
-    private final String hashedValue;
-    
-    public Password(String hashedValue) {
-        if (hashedValue == null || hashedValue.trim().isEmpty()) {
-            throw new IllegalArgumentException("Password hash cannot be null or empty");
+    private final String value;
+
+    public Password(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be null or empty");
         }
-        this.hashedValue = hashedValue;
+        this.value = value.trim();
     }
-    
+
+    public String getValue() {
+        return value;
+    }
+
+    // Keep this for backward compatibility
     public String getHashedValue() {
-        return hashedValue;
+        return value;
     }
-    
+
+    public boolean matches(String plainTextPassword) {
+        return this.value.equals(plainTextPassword);
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Password password = (Password) o;
-        return hashedValue.equals(password.hashedValue);
+        return value.equals(password.value);
     }
-    
+
     @Override
     public int hashCode() {
-        return Objects.hash(hashedValue);
+        return Objects.hash(value);
     }
-    
+
     @Override
     public String toString() {
         return "***HIDDEN***";

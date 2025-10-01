@@ -9,27 +9,27 @@ import java.util.Scanner;
  */
 public class ManagerView extends ConsoleView {
     private final ManagerController controller;
-    
+
     public ManagerView(Scanner scanner, ManagerController controller) {
         super(scanner);
         this.controller = controller;
     }
-    
+
     @Override
     public void display() {
         boolean running = true;
-        
+
         while (running) {
             String[] options = {
-                "Item Management",
-                "Stock Management",
-                "Reports",
-                "Customer Management",
-                "Logout"
+                    "Item Management",
+                    "Stock Management",
+                    "Reports",
+                    "Customer Management",
+                    "Logout"
             };
-            
+
             int choice = displayMenu("MANAGER MENU", options);
-            
+
             switch (choice) {
                 case 1:
                     itemManagementMenu();
@@ -53,24 +53,24 @@ public class ManagerView extends ConsoleView {
             }
         }
     }
-    
+
     /**
      * Item management submenu.
      */
     private void itemManagementMenu() {
         boolean running = true;
-        
+
         while (running) {
             String[] options = {
-                "Add New Item",
-                "View All Items",
-                "Update Item",
-                "Delete Item",
-                "Search Item"
+                    "Add New Item",
+                    "View All Items",
+                    "Update Item",
+                    "Delete Item",
+                    "Search Item"
             };
-            
+
             int choice = displayMenu("ITEM MANAGEMENT", options);
-            
+
             switch (choice) {
                 case 1:
                     addNewItem();
@@ -96,25 +96,25 @@ public class ManagerView extends ConsoleView {
             }
         }
     }
-    
+
     /**
      * Stock management submenu.
      */
     private void stockManagementMenu() {
         boolean running = true;
-        
+
         while (running) {
             String[] options = {
-                "Receive Stock",
-                "Move to Shelf",
-                "Move to Website Inventory",
-                "View Stock Batches",
-                "View Shelf Stock",
-                "View Website Inventory"
+                    "Receive Stock",
+                    "Move to Shelf",
+                    "Move to Website Inventory",
+                    "View Stock Batches",
+                    "View Shelf Stock",
+                    "View Website Inventory"
             };
-            
+
             int choice = displayMenu("STOCK MANAGEMENT", options);
-            
+
             switch (choice) {
                 case 1:
                     receiveStock();
@@ -143,25 +143,25 @@ public class ManagerView extends ConsoleView {
             }
         }
     }
-    
+
     /**
      * Reports submenu.
      */
     private void reportsMenu() {
         boolean running = true;
-        
+
         while (running) {
             String[] options = {
-                "Daily Sales Report",
-                "Stock Report",
-                "Reorder Level Report",
-                "Bill Report",
-                "Counter Sales Report",
-                "Online Sales Report"
+                    "Daily Sales Report",
+                    "Stock Report",
+                    "Reorder Level Report",
+                    "Bill Report",
+                    "Counter Sales Report",
+                    "Online Sales Report"
             };
-            
+
             int choice = displayMenu("REPORTS", options);
-            
+
             switch (choice) {
                 case 1:
                     dailySalesReport();
@@ -190,22 +190,22 @@ public class ManagerView extends ConsoleView {
             }
         }
     }
-    
+
     /**
      * Customer management submenu.
      */
     private void customerManagementMenu() {
         boolean running = true;
-        
+
         while (running) {
             String[] options = {
-                "Register Customer",
-                "View All Customers",
-                "Search Customer"
+                    "Register Customer",
+                    "View All Customers",
+                    "Search Customer"
             };
-            
+
             int choice = displayMenu("CUSTOMER MANAGEMENT", options);
-            
+
             switch (choice) {
                 case 1:
                     registerCustomer();
@@ -225,21 +225,21 @@ public class ManagerView extends ConsoleView {
             }
         }
     }
-    
+
     // Item Management Methods
-    
+
     private void addNewItem() {
         displayHeader("ADD NEW ITEM");
-        
+
         try {
             String name = getInput("Item Name: ");
             String code = getInput("Item Code: ");
             double price = Double.parseDouble(getInput("Unit Price (LKR): "));
             double discount = Double.parseDouble(getInput("Discount (%): "));
             int reorderLevel = getIntInput("Reorder Level: ");
-            
+
             boolean success = controller.addNewItem(name, code, price, discount, reorderLevel);
-            
+
             if (success) {
                 displaySuccess("Item added successfully!");
             } else {
@@ -248,49 +248,49 @@ public class ManagerView extends ConsoleView {
         } catch (Exception e) {
             displayError("Error: " + e.getMessage());
         }
-        
+
         pause();
     }
-    
+
     private void viewAllItems() {
         displayHeader("ALL ITEMS");
         controller.displayAllItems();
         pause();
     }
-    
+
     private void updateItem() {
         displayHeader("UPDATE ITEM");
         displayError("Feature not implemented in CCCP1");
         pause();
     }
-    
+
     private void deleteItem() {
         displayHeader("DELETE ITEM");
         displayError("Feature not implemented in CCCP1");
         pause();
     }
-    
+
     private void searchItem() {
         displayHeader("SEARCH ITEM");
         String code = getInput("Enter Item Code: ");
         controller.searchItemByCode(code);
         pause();
     }
-    
+
     // Stock Management Methods
-    
+
     private void receiveStock() {
         displayHeader("RECEIVE STOCK");
-        
+
         try {
             String itemCode = getInput("Item Code: ");
             int quantity = getIntInput("Quantity: ");
             String purchaseDate = getInput("Purchase Date (YYYY-MM-DD): ");
             String expiryDate = getInput("Expiry Date (YYYY-MM-DD, optional): ");
-            
-            boolean success = controller.receiveStock(itemCode, quantity, purchaseDate, 
-                                                     expiryDate.isEmpty() ? null : expiryDate);
-            
+
+            boolean success = controller.receiveStock(itemCode, quantity, purchaseDate,
+                    expiryDate.isEmpty() ? null : expiryDate);
+
             if (success) {
                 displaySuccess("Stock received successfully!");
             } else {
@@ -299,19 +299,19 @@ public class ManagerView extends ConsoleView {
         } catch (Exception e) {
             displayError("Error: " + e.getMessage());
         }
-        
+
         pause();
     }
-    
+
     private void moveToShelf() {
         displayHeader("MOVE STOCK TO SHELF");
-        
+
         try {
             String itemCode = getInput("Item Code: ");
             int quantity = getIntInput("Quantity to Move: ");
-            
+
             boolean success = controller.moveToShelf(itemCode, quantity);
-            
+
             if (success) {
                 displaySuccess("Stock moved to shelf successfully!");
             } else {
@@ -320,86 +320,86 @@ public class ManagerView extends ConsoleView {
         } catch (Exception e) {
             displayError("Error: " + e.getMessage());
         }
-        
+
         pause();
     }
-    
+
     private void moveToWebsite() {
         displayHeader("MOVE STOCK TO WEBSITE");
         displayError("Feature will be fully implemented in CCCP2");
         pause();
     }
-    
+
     private void viewStockBatches() {
         displayHeader("STOCK BATCHES");
         controller.displayStockBatches();
         pause();
     }
-    
+
     private void viewShelfStock() {
         displayHeader("SHELF STOCK");
         controller.displayShelfStock();
         pause();
     }
-    
+
     private void viewWebsiteInventory() {
         displayHeader("WEBSITE INVENTORY");
         displayError("Feature will be fully implemented in CCCP2");
         pause();
     }
-    
+
     // Report Methods
-    
+
     private void dailySalesReport() {
         displayHeader("DAILY SALES REPORT");
         String date = getInput("Enter Date (YYYY-MM-DD, or press Enter for today): ");
         controller.displayDailySalesReport(date.isEmpty() ? null : date);
         pause();
     }
-    
+
     private void stockReport() {
         displayHeader("STOCK REPORT");
         controller.displayStockReport();
         pause();
     }
-    
+
     private void reorderReport() {
         displayHeader("REORDER LEVEL REPORT");
         controller.displayReorderReport();
         pause();
     }
-    
+
     private void billReport() {
         displayHeader("BILL REPORT");
         controller.displayBillReport();
         pause();
     }
-    
+
     private void counterSalesReport() {
         displayHeader("COUNTER SALES REPORT");
         String date = getInput("Enter Date (YYYY-MM-DD, or press Enter for today): ");
         controller.displayCounterSalesReport(date.isEmpty() ? null : date);
         pause();
     }
-    
+
     private void onlineSalesReport() {
         displayHeader("ONLINE SALES REPORT");
         String date = getInput("Enter Date (YYYY-MM-DD, or press Enter for today): ");
         controller.displayOnlineSalesReport(date.isEmpty() ? null : date);
         pause();
     }
-    
+
     // Customer Management Methods
-    
+
     private void registerCustomer() {
         displayHeader("REGISTER CUSTOMER");
-        
+
         try {
             String name = getInput("Customer Name: ");
             String phone = getInput("Phone Number: ");
-            
+
             boolean success = controller.registerCustomer(name, phone);
-            
+
             if (success) {
                 displaySuccess("Customer registered successfully!");
             } else {
@@ -408,16 +408,16 @@ public class ManagerView extends ConsoleView {
         } catch (Exception e) {
             displayError("Error: " + e.getMessage());
         }
-        
+
         pause();
     }
-    
+
     private void viewAllCustomers() {
         displayHeader("ALL CUSTOMERS");
         controller.displayAllCustomers();
         pause();
     }
-    
+
     private void searchCustomer() {
         displayHeader("SEARCH CUSTOMER");
         String phone = getInput("Enter Phone Number: ");
