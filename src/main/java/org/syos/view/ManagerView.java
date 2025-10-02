@@ -307,6 +307,11 @@ public class ManagerView extends ConsoleView {
         displayHeader("MOVE STOCK TO SHELF");
 
         try {
+            // First show available stock batches
+            System.out.println("Available Stock Batches:");
+            controller.displayStockBatches();
+            System.out.println();
+            
             String itemCode = getInput("Item Code: ");
             int quantity = getIntInput("Quantity to Move: ");
 
@@ -326,7 +331,22 @@ public class ManagerView extends ConsoleView {
 
     private void moveToWebsite() {
         displayHeader("MOVE STOCK TO WEBSITE");
-        displayError("Feature will be fully implemented in CCCP2");
+
+        String itemCode = getInput("Enter Item Code: ");
+        String quantityStr = getInput("Enter Quantity to Move: ");
+
+        try {
+            int quantity = Integer.parseInt(quantityStr);
+
+            if (controller.moveToWebsite(itemCode, quantity)) {
+                displaySuccess("Successfully moved " + quantity + " units of " + itemCode + " to website inventory");
+            } else {
+                displayError("Failed to move stock to website");
+            }
+        } catch (NumberFormatException e) {
+            displayError("Invalid quantity format");
+        }
+
         pause();
     }
 
@@ -344,7 +364,7 @@ public class ManagerView extends ConsoleView {
 
     private void viewWebsiteInventory() {
         displayHeader("WEBSITE INVENTORY");
-        displayError("Feature will be fully implemented in CCCP2");
+        controller.displayWebsiteInventory();
         pause();
     }
 

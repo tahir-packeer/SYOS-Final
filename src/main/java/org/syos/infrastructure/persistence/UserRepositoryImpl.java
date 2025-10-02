@@ -47,10 +47,10 @@ public class UserRepositoryImpl implements UserRepository {
 
             return user;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error saving user", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -74,10 +74,10 @@ public class UserRepositoryImpl implements UserRepository {
 
             return Optional.empty();
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding user by ID", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -101,10 +101,10 @@ public class UserRepositoryImpl implements UserRepository {
 
             return Optional.empty();
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding user by username", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -127,10 +127,10 @@ public class UserRepositoryImpl implements UserRepository {
 
             return users;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding all users", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -155,10 +155,10 @@ public class UserRepositoryImpl implements UserRepository {
 
             return users;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding users by role", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -182,10 +182,10 @@ public class UserRepositoryImpl implements UserRepository {
                 stmt.executeUpdate();
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error updating user", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -202,10 +202,10 @@ public class UserRepositoryImpl implements UserRepository {
                 stmt.executeUpdate();
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error deleting user", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 

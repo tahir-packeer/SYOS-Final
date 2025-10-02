@@ -43,7 +43,7 @@ public class TransactionManager {
             
         } finally {
             if (conn != null) {
-                dbConnection.releaseConnection(conn);
+                dbConnection.closeConnection(conn);
             }
         }
     }

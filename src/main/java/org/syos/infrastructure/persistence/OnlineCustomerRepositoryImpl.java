@@ -53,7 +53,7 @@ public class OnlineCustomerRepositoryImpl implements OnlineCustomerRepository {
 
             return customer;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error saving online customer: " + e.getMessage(), e);
         }
     }
@@ -74,7 +74,7 @@ public class OnlineCustomerRepositoryImpl implements OnlineCustomerRepository {
 
             return Optional.empty();
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding online customer by ID: " + e.getMessage(), e);
         }
     }
@@ -95,7 +95,7 @@ public class OnlineCustomerRepositoryImpl implements OnlineCustomerRepository {
 
             return Optional.empty();
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding online customer by email: " + e.getMessage(), e);
         }
     }
@@ -112,7 +112,7 @@ public class OnlineCustomerRepositoryImpl implements OnlineCustomerRepository {
                 customers.add(mapResultSetToOnlineCustomer(rs));
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding all online customers: " + e.getMessage(), e);
         }
 
@@ -137,7 +137,7 @@ public class OnlineCustomerRepositoryImpl implements OnlineCustomerRepository {
                         + customer.getOnlineCustomerId());
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error updating online customer: " + e.getMessage(), e);
         }
     }
@@ -155,7 +155,7 @@ public class OnlineCustomerRepositoryImpl implements OnlineCustomerRepository {
                 throw new SQLException("Deleting online customer failed, no rows affected. Customer ID: " + customerId);
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error deleting online customer: " + e.getMessage(), e);
         }
     }
@@ -176,7 +176,7 @@ public class OnlineCustomerRepositoryImpl implements OnlineCustomerRepository {
 
             return false;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error checking if online customer exists by email: " + e.getMessage(), e);
         }
     }

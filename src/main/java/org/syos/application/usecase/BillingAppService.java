@@ -9,6 +9,7 @@ import org.syos.domain.enums.TransactionType;
 import org.syos.domain.valueobject.ItemCode;
 import org.syos.domain.valueobject.Money;
 import org.syos.infrastructure.persistence.TransactionManager;
+import org.syos.infrastructure.util.LoggingService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,84 +87,104 @@ public class BillingAppService {
     private Bill processSale(List<OrderItem> orderItems, String customerName,
             TransactionType transactionType, PaymentMethod paymentMethod,
             Money cashTendered, Money manualDiscount) {
-        return transactionManager.executeInTransaction(conn -> {
+
+        // First, validate and prepare everything outside transaction
+        List<BillItem> billItems = new ArrayList<>();
+
+        for (OrderItem orderItem : orderItems) {
+            Optional<Item> itemOpt = itemRepository.findByCode(
+                    new ItemCode(orderItem.getItemCode()));
+
+            if (itemOpt.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Item not found: " + orderItem.getItemCode());
+            }
+
+            Item item = itemOpt.get();
+
+            // Check stock availability
+            if (!checkStockAvailability(item.getCode(), orderItem.getQuantity(),
+                    transactionType)) {
+                throw new IllegalArgumentException(
+                        "Insufficient stock for item: " + item.getName());
+            }
+
+            BillItem billItem = new BillItem(item, orderItem.getQuantity());
+            billItems.add(billItem);
+        }
+
+        // Build bill outside transaction
+        long nextSerial = billRepository.getNextSerialNumber();
+        String serialNumber = serialNumberGenerator.generateSerialNumber(nextSerial);
+
+        Bill.Builder billBuilder = new Bill.Builder()
+                .serialNumber(serialNumber)
+                .dateTime(LocalDateTime.now())
+                .transactionType(transactionType)
+                .customerName(customerName)
+                .items(billItems)
+                .paymentMethod(paymentMethod)
+                .discount(manualDiscount != null ? manualDiscount : Money.zero());
+
+        if (cashTendered != null) {
+            billBuilder.cashTendered(cashTendered);
+        }
+
+        Bill bill = billBuilder.build();
+
+        // Validate payment before transaction
+        if (paymentMethod == PaymentMethod.CASH) {
+            if (cashTendered == null || cashTendered.isLessThan(bill.getTotalAmount())) {
+                throw new IllegalArgumentException("Insufficient cash tendered");
+            }
+        } else {
+            // Process electronic payment
+            boolean paymentSuccess = paymentGateway.processPayment(
+                    bill.getTotalAmount(), paymentMethod, customerName);
+            if (!paymentSuccess) {
+                throw new RuntimeException("Payment processing failed");
+            }
+        }
+
+        // Log transaction start
+        LoggingService.logTransactionStart(serialNumber, transactionType.name());
+        logger.info("Starting transaction for sale: " + serialNumber);
+
+        // Now execute the database transaction (save bill + update stock)
+        Bill savedBill = transactionManager.executeInTransaction(conn -> {
             try {
-                // 1. Validate items and build bill items
-                List<BillItem> billItems = new ArrayList<>();
-
-                for (OrderItem orderItem : orderItems) {
-                    Optional<Item> itemOpt = itemRepository.findByCode(
-                            new ItemCode(orderItem.getItemCode()));
-
-                    if (itemOpt.isEmpty()) {
-                        throw new IllegalArgumentException(
-                                "Item not found: " + orderItem.getItemCode());
-                    }
-
-                    Item item = itemOpt.get();
-
-                    // Check stock availability
-                    if (!checkStockAvailability(item.getCode(), orderItem.getQuantity(),
-                            transactionType)) {
-                        throw new IllegalArgumentException(
-                                "Insufficient stock for item: " + item.getName());
-                    }
-
-                    BillItem billItem = new BillItem(item, orderItem.getQuantity());
-                    billItems.add(billItem);
-                }
-
-                // 2. Generate serial number
-                long nextSerial = billRepository.getNextSerialNumber();
-                String serialNumber = serialNumberGenerator.generateSerialNumber(nextSerial);
-
-                // 3. Build bill
-                Bill.Builder billBuilder = new Bill.Builder()
-                        .serialNumber(serialNumber)
-                        .dateTime(LocalDateTime.now())
-                        .transactionType(transactionType)
-                        .customerName(customerName)
-                        .items(billItems)
-                        .paymentMethod(paymentMethod)
-                        .discount(manualDiscount != null ? manualDiscount : Money.zero());
-
-                if (cashTendered != null) {
-                    billBuilder.cashTendered(cashTendered);
-                }
-
-                Bill bill = billBuilder.build();
-
-                // 4. Validate payment
-                if (paymentMethod == PaymentMethod.CASH) {
-                    if (cashTendered == null || cashTendered.isLessThan(bill.getTotalAmount())) {
-                        throw new IllegalArgumentException("Insufficient cash tendered");
-                    }
-                } else {
-                    // Process electronic payment
-                    boolean paymentSuccess = paymentGateway.processPayment(
-                            bill.getTotalAmount(), paymentMethod, customerName);
-                    if (!paymentSuccess) {
-                        throw new RuntimeException("Payment processing failed");
-                    }
-                }
-
-                // 5. Save bill
-                Bill savedBill = billRepository.save(bill);
-
-                // 6. Update stock
+                // Save bill and update stock in single atomic transaction
+                Bill dbBill = billRepository.save(bill);
                 updateStockAfterSale(billItems, transactionType);
 
-                // 7. Print bill
-                billPrinter.print(savedBill);
-
-                logger.info("Processed " + transactionType + " sale: " + serialNumber);
-                return savedBill;
+                logger.info("Database transaction completed for sale: " + serialNumber);
+                return dbBill;
 
             } catch (Exception e) {
-                logger.error("Error processing sale", e);
-                throw new RuntimeException("Failed to process sale: " + e.getMessage(), e);
+                logger.error("Error in database transaction for sale: " + serialNumber, e);
+                throw new RuntimeException("Failed to save sale: " + e.getMessage(), e);
             }
         });
+
+        // Log transaction completion
+        LoggingService.logTransactionComplete(serialNumber, transactionType.name());
+
+        // Print bill AFTER successful database transaction
+        try {
+            logger.info("Starting bill printing for sale: " + serialNumber);
+            billPrinter.print(savedBill);
+            LoggingService.logBillPrintStatus(serialNumber, true, "Success");
+            logger.info("Bill printed successfully for sale: " + serialNumber);
+        } catch (Exception e) {
+            // Log error but don't fail the sale - stock is already updated
+            LoggingService.logBillPrintStatus(serialNumber, false, e.getMessage());
+            logger.error("Error printing bill for sale: " + serialNumber +
+                    ". Sale completed but bill not printed.", e);
+            System.err.println("WARNING: Sale completed but bill printing failed. " +
+                    "Bill serial: " + serialNumber);
+        }
+        logger.info("Processed " + transactionType + " sale: " + serialNumber);
+        return savedBill;
     }
 
     /**
@@ -198,15 +219,29 @@ public class BillingAppService {
                 Optional<ShelfStock> stockOpt = shelfStockRepository.findByItemCode(itemCode);
                 if (stockOpt.isPresent()) {
                     ShelfStock stock = stockOpt.get();
+                    int oldQuantity = stock.getQuantity();
                     stock.reduceStock(quantity);
                     shelfStockRepository.update(stock);
+
+                    // Log inventory change
+                    LoggingService.logInventoryChange(itemCode.getCode(), -quantity,
+                            "Sale - " + transactionType.name());
+                    logger.info("Updated shelf stock for " + itemCode.getCode() +
+                            ": " + oldQuantity + " -> " + stock.getQuantity());
                 }
             } else {
                 Optional<WebsiteInventory> invOpt = websiteInventoryRepository.findByItemCode(itemCode);
                 if (invOpt.isPresent()) {
                     WebsiteInventory inventory = invOpt.get();
+                    int oldQuantity = inventory.getQuantity();
                     inventory.reduceStock(quantity);
                     websiteInventoryRepository.update(inventory);
+
+                    // Log inventory change
+                    LoggingService.logInventoryChange(itemCode.getCode(), -quantity,
+                            "Sale - " + transactionType.name());
+                    logger.info("Updated website inventory for " + itemCode.getCode() +
+                            ": " + oldQuantity + " -> " + inventory.getQuantity());
                 }
             }
         }

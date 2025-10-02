@@ -33,11 +33,25 @@ public class EnhancedBillPrinter implements BillPrinter {
     public void print(Bill bill) {
         String formattedBill = formatBill(bill);
 
-        // Print to console
-        System.out.println(formattedBill);
+        // Always print to console first (most reliable)
+        try {
+            System.out.print(formattedBill);
+            System.out.flush();
+            System.out.print("✓ Bill printed to console\n");
+            System.out.flush();
+        } catch (Exception e) {
+            System.err.print("Error printing to console: " + e.getMessage() + "\n");
+            System.err.flush();
+        }
 
-        // Save to file
-        saveBillToFile(bill, formattedBill);
+        // Try to save to file (don't fail if this doesn't work)
+        try {
+            saveBillToFile(bill, formattedBill);
+        } catch (Exception e) {
+            System.err.print("Warning: Could not save bill to file: " + e.getMessage() + "\n");
+            System.err.flush();
+            // Don't throw exception - console printing succeeded
+        }
     }
 
     @Override
@@ -109,19 +123,31 @@ public class EnhancedBillPrinter implements BillPrinter {
 
     private void saveBillToFile(Bill bill, String formattedBill) {
         try {
+            // Ensure directory exists
+            Path billsPath = Paths.get(billsDirectory);
+            if (!Files.exists(billsPath)) {
+                Files.createDirectories(billsPath);
+            }
+
             String dateString = bill.getDateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             String filename = String.format("BILL_%s_%s.txt",
                     bill.getSerialNumber(), dateString);
             Path filePath = Paths.get(billsDirectory, filename);
 
+            // Write with explicit flushing and closing
             try (FileWriter writer = new FileWriter(filePath.toFile())) {
                 writer.write(formattedBill);
+                writer.flush();
             }
 
-            System.out.println("✓ Bill saved to: " + filePath.toAbsolutePath());
+            System.out.print("✓ Bill saved to file: " + filePath.getFileName() + "\n");
+            System.out.flush();
 
-        } catch (IOException e) {
-            System.err.println("Warning: Could not save bill to file: " + e.getMessage());
+        } catch (Exception e) {
+            // Log but don't fail - file saving is optional
+            System.err.print("Warning: Could not save bill to file: " + e.getMessage() + "\n");
+            System.err.flush();
+            throw new RuntimeException("File saving failed", e); // Re-throw as runtime exception
         }
     }
 

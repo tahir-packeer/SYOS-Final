@@ -41,10 +41,10 @@ public class CustomerRepositoryImpl implements CustomerRepository {
 
             return customer;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error saving customer", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -68,10 +68,10 @@ public class CustomerRepositoryImpl implements CustomerRepository {
 
             return Optional.empty();
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding customer by ID", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -95,10 +95,10 @@ public class CustomerRepositoryImpl implements CustomerRepository {
 
             return Optional.empty();
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding customer by phone", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -121,10 +121,10 @@ public class CustomerRepositoryImpl implements CustomerRepository {
 
             return customers;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding all customers", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -149,10 +149,10 @@ public class CustomerRepositoryImpl implements CustomerRepository {
 
             return customers;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error searching customers by name", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -172,10 +172,10 @@ public class CustomerRepositoryImpl implements CustomerRepository {
                 stmt.executeUpdate();
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error updating customer", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -192,10 +192,10 @@ public class CustomerRepositoryImpl implements CustomerRepository {
                 stmt.executeUpdate();
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error deleting customer", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 

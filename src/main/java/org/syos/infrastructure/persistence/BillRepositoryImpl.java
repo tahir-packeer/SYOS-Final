@@ -81,7 +81,7 @@ public class BillRepositoryImpl implements BillRepository {
             conn.commit();
             return bill;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             if (conn != null) {
                 try {
                     conn.rollback();
@@ -94,10 +94,10 @@ public class BillRepositoryImpl implements BillRepository {
             if (conn != null) {
                 try {
                     conn.setAutoCommit(true);
-                } catch (SQLException e) {
+                } catch (ClassNotFoundException | SQLException e) {
                     e.printStackTrace();
                 }
-                dbConnection.releaseConnection(conn);
+                dbConnection.closeConnection(conn);
             }
         }
     }
@@ -122,10 +122,10 @@ public class BillRepositoryImpl implements BillRepository {
 
             return Optional.empty();
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding bill by ID", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -149,10 +149,10 @@ public class BillRepositoryImpl implements BillRepository {
 
             return Optional.empty();
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding bill by serial number", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -175,10 +175,10 @@ public class BillRepositoryImpl implements BillRepository {
 
             return bills;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding all bills", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -203,10 +203,10 @@ public class BillRepositoryImpl implements BillRepository {
 
             return bills;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding bills by date", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -231,10 +231,10 @@ public class BillRepositoryImpl implements BillRepository {
 
             return bills;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding bills by transaction type", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -261,10 +261,10 @@ public class BillRepositoryImpl implements BillRepository {
 
             return bills;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding bills by date and type", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -285,10 +285,10 @@ public class BillRepositoryImpl implements BillRepository {
                 return 1;
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error getting next serial number", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
 
@@ -361,7 +361,7 @@ public class BillRepositoryImpl implements BillRepository {
             }
         } finally {
             if (conn != null) {
-                dbConnection.releaseConnection(conn);
+                dbConnection.closeConnection(conn);
             }
         }
 

@@ -107,7 +107,7 @@ CREATE TABLE user
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON
                         UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY
-                        (item_id) REFERENCES item
+        (item_id) REFERENCES item
                         (item_id) ON
                         DELETE CASCADE
 );

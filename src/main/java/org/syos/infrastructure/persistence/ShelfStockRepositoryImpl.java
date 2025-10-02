@@ -4,6 +4,7 @@ import org.syos.application.repository.ShelfStockRepository;
 import org.syos.domain.entity.Item;
 import org.syos.domain.entity.ShelfStock;
 import org.syos.domain.valueobject.ItemCode;
+import org.syos.domain.valueobject.Money;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -53,14 +54,16 @@ public class ShelfStockRepositoryImpl implements ShelfStockRepository {
 
             return stock;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error saving shelf stock: " + e.getMessage(), e);
         }
     }
 
     @Override
     public Optional<ShelfStock> findByItemCode(ItemCode code) {
-        String sql = "SELECT ss.shelf_stock_id, ss.item_id, ss.quantity FROM shelf_stock ss " +
+        String sql = "SELECT ss.shelf_stock_id, ss.item_id, ss.quantity, " +
+                "i.code, i.name, i.unit_price, i.discount, i.reorder_level " +
+                "FROM shelf_stock ss " +
                 "JOIN item i ON ss.item_id = i.item_id WHERE i.code = ?";
 
         try (Connection conn = dbConnection.getConnection();
@@ -70,20 +73,24 @@ public class ShelfStockRepositoryImpl implements ShelfStockRepository {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(mapResultSetToShelfStock(rs));
+                    return Optional.of(mapResultSetToShelfStockWithItem(rs));
                 }
             }
 
             return Optional.empty();
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding shelf stock by item code: " + e.getMessage(), e);
         }
     }
 
     @Override
     public List<ShelfStock> findAll() {
-        String sql = "SELECT ss.shelf_stock_id, ss.item_id, ss.quantity FROM shelf_stock ss ORDER BY ss.item_id";
+        String sql = "SELECT ss.shelf_stock_id, ss.item_id, ss.quantity, " +
+                "i.code, i.name, i.unit_price, i.discount, i.reorder_level " +
+                "FROM shelf_stock ss " +
+                "JOIN item i ON ss.item_id = i.item_id " +
+                "ORDER BY ss.item_id";
         List<ShelfStock> stocks = new ArrayList<>();
 
         try (Connection conn = dbConnection.getConnection();
@@ -91,10 +98,10 @@ public class ShelfStockRepositoryImpl implements ShelfStockRepository {
                 ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                stocks.add(mapResultSetToShelfStock(rs));
+                stocks.add(mapResultSetToShelfStockWithItem(rs));
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding all shelf stock: " + e.getMessage(), e);
         }
 
@@ -103,7 +110,8 @@ public class ShelfStockRepositoryImpl implements ShelfStockRepository {
 
     @Override
     public List<ShelfStock> findBelowReorderLevel() {
-        String sql = "SELECT ss.shelf_stock_id, ss.item_id, ss.quantity, i.reorder_level " +
+        String sql = "SELECT ss.shelf_stock_id, ss.item_id, ss.quantity, " +
+                "i.code, i.name, i.unit_price, i.discount, i.reorder_level " +
                 "FROM shelf_stock ss " +
                 "JOIN item i ON ss.item_id = i.item_id " +
                 "WHERE ss.quantity < i.reorder_level " +
@@ -115,10 +123,10 @@ public class ShelfStockRepositoryImpl implements ShelfStockRepository {
                 ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                stocks.add(mapResultSetToShelfStock(rs));
+                stocks.add(mapResultSetToShelfStockWithItem(rs));
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding shelf stock below reorder level: " + e.getMessage(), e);
         }
 
@@ -142,7 +150,7 @@ public class ShelfStockRepositoryImpl implements ShelfStockRepository {
                         "Updating shelf stock failed, no rows affected. Shelf Stock ID: " + stock.getShelfStockId());
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error updating shelf stock: " + e.getMessage(), e);
         }
     }
@@ -161,7 +169,7 @@ public class ShelfStockRepositoryImpl implements ShelfStockRepository {
                 throw new SQLException("Deleting shelf stock failed, no rows affected. Item Code: " + code.getCode());
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error deleting shelf stock: " + e.getMessage(), e);
         }
     }
@@ -178,5 +186,23 @@ public class ShelfStockRepositoryImpl implements ShelfStockRepository {
         }
 
         return new ShelfStock(shelfStockId, itemOpt.get(), quantity);
+    }
+
+    private ShelfStock mapResultSetToShelfStockWithItem(ResultSet rs) throws SQLException {
+        Long shelfStockId = rs.getLong("shelf_stock_id");
+        Long itemId = rs.getLong("item_id");
+        int quantity = rs.getInt("quantity");
+
+        // Create item directly from the joined result set to avoid additional DB calls
+        ItemCode itemCode = new ItemCode(rs.getString("code"));
+        Item item = new Item(
+                itemId,
+                rs.getString("name"),
+                itemCode,
+                new Money(rs.getBigDecimal("unit_price")),
+                rs.getBigDecimal("discount"),
+                rs.getInt("reorder_level"));
+
+        return new ShelfStock(shelfStockId, item, quantity);
     }
 }

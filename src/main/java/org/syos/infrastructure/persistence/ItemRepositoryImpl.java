@@ -51,10 +51,10 @@ public class ItemRepositoryImpl implements ItemRepository {
             
             return item;
             
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error saving item", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
     
@@ -78,10 +78,10 @@ public class ItemRepositoryImpl implements ItemRepository {
             
             return Optional.empty();
             
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding item by ID", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
     
@@ -105,10 +105,10 @@ public class ItemRepositoryImpl implements ItemRepository {
             
             return Optional.empty();
             
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding item by code", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
     
@@ -131,10 +131,10 @@ public class ItemRepositoryImpl implements ItemRepository {
             
             return items;
             
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding all items", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
     
@@ -159,10 +159,10 @@ public class ItemRepositoryImpl implements ItemRepository {
             
             return items;
             
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error searching items by name", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
     
@@ -186,10 +186,10 @@ public class ItemRepositoryImpl implements ItemRepository {
                 stmt.executeUpdate();
             }
             
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error updating item", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
     
@@ -206,10 +206,10 @@ public class ItemRepositoryImpl implements ItemRepository {
                 stmt.executeUpdate();
             }
             
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error deleting item", e);
         } finally {
-            dbConnection.releaseConnection(conn);
+            dbConnection.closeConnection(conn);
         }
     }
     

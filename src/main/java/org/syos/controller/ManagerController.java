@@ -119,6 +119,16 @@ public class ManagerController {
         }
     }
 
+    public boolean moveToWebsite(String itemCode, int quantity) {
+        try {
+            stockService.moveToWebsite(itemCode, quantity);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error moving stock to website: " + e.getMessage());
+            return false;
+        }
+    }
+
     public void displayStockBatches() {
         try {
             List<StockBatch> batches = stockService.getAllStockBatches();
@@ -176,6 +186,39 @@ public class ManagerController {
 
         } catch (Exception e) {
             System.err.println("Error displaying shelf stock: " + e.getMessage());
+        }
+    }
+
+    public void displayWebsiteInventory() {
+        try {
+            List<org.syos.domain.entity.WebsiteInventory> websiteInventories = stockService.getAllWebsiteInventory();
+
+            if (websiteInventories.isEmpty()) {
+                System.out.println("No items in website inventory.");
+                return;
+            }
+
+            System.out.println();
+            System.out.println("=".repeat(80));
+            System.out.printf("%-15s %-30s %-15s %-15s%n",
+                    "ITEM CODE", "ITEM NAME", "WEB QTY", "REORDER LEVEL");
+            System.out.println("-".repeat(80));
+
+            for (org.syos.domain.entity.WebsiteInventory inventory : websiteInventories) {
+                org.syos.domain.entity.Item item = inventory.getItem();
+                String status = inventory.getQuantity() < item.getReorderLevel() ? " (LOW STOCK!)" : "";
+
+                System.out.printf("%-15s %-30s %-15d %-15d%s%n",
+                        item.getCode().getCode(),
+                        truncate(item.getName(), 30),
+                        inventory.getQuantity(),
+                        item.getReorderLevel(),
+                        status);
+            }
+            System.out.println("=".repeat(80));
+
+        } catch (Exception e) {
+            System.err.println("Error displaying website inventory: " + e.getMessage());
         }
     }
 

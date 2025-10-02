@@ -35,7 +35,7 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
         try (Connection conn = dbConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            stmt.setString(1, inventory.getItem().getCode().getCode());
+            stmt.setLong(1, inventory.getItem().getItemId());
             stmt.setInt(2, inventory.getQuantity());
 
             int affectedRows = stmt.executeUpdate();
@@ -53,7 +53,7 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
 
             return inventory;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error saving website inventory: " + e.getMessage(), e);
         }
     }
@@ -75,7 +75,7 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
 
             return Optional.empty();
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding website inventory by item code: " + e.getMessage(), e);
         }
     }
@@ -93,7 +93,7 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
                 inventories.add(mapResultSetToWebsiteInventory(rs));
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding all website inventory: " + e.getMessage(), e);
         }
 
@@ -113,7 +113,7 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
                 inventories.add(mapResultSetToWebsiteInventory(rs));
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding available website inventory: " + e.getMessage(), e);
         }
 
@@ -137,7 +137,7 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
                         + inventory.getWebInventoryId());
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error updating website inventory: " + e.getMessage(), e);
         }
     }
@@ -157,7 +157,7 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
                         "Deleting website inventory failed, no rows affected. Item Code: " + code.getCode());
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error deleting website inventory: " + e.getMessage(), e);
         }
     }

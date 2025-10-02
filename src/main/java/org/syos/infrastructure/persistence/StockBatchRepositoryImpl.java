@@ -57,7 +57,7 @@ public class StockBatchRepositoryImpl implements StockBatchRepository {
 
             return batch;
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error saving stock batch: " + e.getMessage(), e);
         }
     }
@@ -81,7 +81,7 @@ public class StockBatchRepositoryImpl implements StockBatchRepository {
 
             return Optional.empty();
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding stock batch by ID: " + e.getMessage(), e);
         }
     }
@@ -104,7 +104,7 @@ public class StockBatchRepositoryImpl implements StockBatchRepository {
                 }
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding stock batches by item code: " + e.getMessage(), e);
         }
 
@@ -129,7 +129,7 @@ public class StockBatchRepositoryImpl implements StockBatchRepository {
                 }
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding stock batches by item code ordered by date: " + e.getMessage(),
                     e);
         }
@@ -152,7 +152,7 @@ public class StockBatchRepositoryImpl implements StockBatchRepository {
                 batches.add(mapResultSetToStockBatch(rs));
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error finding all stock batches: " + e.getMessage(), e);
         }
 
@@ -179,7 +179,7 @@ public class StockBatchRepositoryImpl implements StockBatchRepository {
                         "Updating stock batch failed, no rows affected. Batch ID: " + batch.getBatchId());
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error updating stock batch: " + e.getMessage(), e);
         }
     }
@@ -198,7 +198,7 @@ public class StockBatchRepositoryImpl implements StockBatchRepository {
                 throw new SQLException("Deleting stock batch failed, no rows affected. Batch ID: " + batchId);
             }
 
-        } catch (SQLException e) {
+        } catch (ClassNotFoundException | SQLException e) {
             throw new RuntimeException("Error deleting stock batch: " + e.getMessage(), e);
         }
     }

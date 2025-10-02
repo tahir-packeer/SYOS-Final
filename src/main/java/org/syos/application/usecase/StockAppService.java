@@ -76,7 +76,8 @@ public class StockAppService {
                 List<StockBatch> batches = stockBatchRepository.findByItemCodeOrderedByDate(code);
 
                 if (batches.isEmpty()) {
-                    throw new IllegalArgumentException("No stock batches available for: " + itemCode);
+                    throw new IllegalArgumentException("No stock batches found for item code: " + itemCode + 
+                        ". Please receive stock first or check if the item code exists.");
                 }
 
                 // Apply shelving strategy
@@ -150,7 +151,7 @@ public class StockAppService {
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
         if (availableBatches.isEmpty()) {
-            throw new IllegalArgumentException("No stock batches available");
+            throw new IllegalArgumentException("No stock batches with remaining quantity found. All batches may be empty or already moved to shelf.");
         }
 
         int remaining = quantityNeeded;
@@ -265,6 +266,102 @@ public class StockAppService {
         } catch (Exception e) {
             logger.error("Error getting shelf stock", e);
             throw new RuntimeException("Failed to get shelf stock", e);
+        }
+    }
+
+    /**
+     * Move stock from batches to website inventory.
+     * Implements same FEFO (First Expired First Out) strategy with fallback to FIFO
+     * as used for shelf stock.
+     */
+    public void moveToWebsite(String itemCode, int quantityToMove) {
+        transactionManager.executeInTransaction(conn -> {
+            try {
+                ItemCode code = new ItemCode(itemCode);
+
+                // Get all batches for this item, ordered
+                List<StockBatch> batches = stockBatchRepository.findByItemCodeOrderedByDate(code);
+
+                if (batches.isEmpty()) {
+                    throw new IllegalArgumentException("No stock batches available for: " + itemCode);
+                }
+
+                // Apply same shelving strategy as shelf stock
+                List<StockBatch> batchesToUse = selectBatchesForShelving(batches, quantityToMove);
+
+                int remainingQty = quantityToMove;
+
+                logger.info("Processing " + batchesToUse.size() + " batches for website quantity: " + quantityToMove);
+                for (StockBatch batch : batchesToUse) {
+                    int qtyFromBatch = Math.min(remainingQty, batch.getQuantityRemaining());
+                    logger.info("Taking " + qtyFromBatch + " units from batch " + batch.getBatchId() + " for website");
+                    batch.reduceStock(qtyFromBatch);
+                    stockBatchRepository.update(batch);
+                    logger.info("Batch " + batch.getBatchId() + " updated successfully for website move");
+                    remainingQty -= qtyFromBatch;
+
+                    if (remainingQty == 0)
+                        break;
+                }
+                logger.info("Website batch processing completed");
+
+                // Update website inventory
+                logger.info("Updating website inventory for item: " + itemCode);
+                Optional<org.syos.domain.entity.WebsiteInventory> websiteInventoryOpt = websiteInventoryRepository
+                        .findByItemCode(code);
+
+                if (websiteInventoryOpt.isPresent()) {
+                    org.syos.domain.entity.WebsiteInventory websiteInventory = websiteInventoryOpt.get();
+                    logger.info(
+                            "Found existing website inventory, current quantity: " + websiteInventory.getQuantity());
+                    websiteInventory.addStock(quantityToMove);
+                    logger.info("Updated website inventory quantity to: " + websiteInventory.getQuantity());
+                    websiteInventoryRepository.update(websiteInventory);
+                    logger.info("Website inventory update completed");
+                } else {
+                    logger.info("No existing website inventory found, creating new entry");
+                    Optional<Item> itemOpt = itemRepository.findByCode(code);
+                    if (itemOpt.isPresent()) {
+                        org.syos.domain.entity.WebsiteInventory newWebsiteInventory = new org.syos.domain.entity.WebsiteInventory(
+                                itemOpt.get(), quantityToMove);
+                        websiteInventoryRepository.save(newWebsiteInventory);
+                        logger.info("New website inventory entry created");
+                    } else {
+                        throw new IllegalArgumentException("Item not found: " + itemCode);
+                    }
+                }
+
+                logger.info("Moved " + quantityToMove + " units to website inventory for item: " + itemCode);
+                return null;
+
+            } catch (Exception e) {
+                logger.error("Error moving stock to website", e);
+                throw new RuntimeException("Failed to move stock to website", e);
+            }
+        });
+    }
+
+    /**
+     * Get all website inventory.
+     */
+    public List<org.syos.domain.entity.WebsiteInventory> getAllWebsiteInventory() {
+        try {
+            return websiteInventoryRepository.findAll();
+        } catch (Exception e) {
+            logger.error("Error getting website inventory", e);
+            throw new RuntimeException("Failed to get website inventory", e);
+        }
+    }
+
+    /**
+     * Get website inventory items that are available for online sales.
+     */
+    public List<org.syos.domain.entity.WebsiteInventory> getAvailableWebsiteItems() {
+        try {
+            return websiteInventoryRepository.findAvailableItems();
+        } catch (Exception e) {
+            logger.error("Error getting available website items", e);
+            throw new RuntimeException("Failed to get available website items", e);
         }
     }
 }
