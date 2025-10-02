@@ -76,8 +76,8 @@ public class StockAppService {
                 List<StockBatch> batches = stockBatchRepository.findByItemCodeOrderedByDate(code);
 
                 if (batches.isEmpty()) {
-                    throw new IllegalArgumentException("No stock batches found for item code: " + itemCode + 
-                        ". Please receive stock first or check if the item code exists.");
+                    throw new IllegalArgumentException("No stock batches found for item code: " + itemCode +
+                            ". Please receive stock first or check if the item code exists.");
                 }
 
                 // Apply shelving strategy
@@ -151,7 +151,8 @@ public class StockAppService {
                 .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
         if (availableBatches.isEmpty()) {
-            throw new IllegalArgumentException("No stock batches with remaining quantity found. All batches may be empty or already moved to shelf.");
+            throw new IllegalArgumentException(
+                    "No stock batches with remaining quantity found. All batches may be empty or already moved to shelf.");
         }
 
         int remaining = quantityNeeded;

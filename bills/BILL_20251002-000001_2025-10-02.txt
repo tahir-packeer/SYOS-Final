@@ -1,0 +1,32 @@
+
+=====================================
+        SYNEX OUTLET STORE           
+         Colombo, Sri Lanka          
+         Tel: +94-11-1234567         
+=====================================
+
+Bill Serial No: 20251002-000001
+Date: 2025-10-02 13:37:30
+Transaction Type: Counter
+Customer: Tahir
+
+-------------------------------------
+Item                   Qty      Price        Total
+-------------------------------------
+Milk Powder 400g         5  Rs 850.00   Rs 3825.00
+Pears Baby Soap          4  Rs 145.00    Rs 580.00
+Bread                    3   Rs 80.00    Rs 240.00
+Eggs (10 pack)           3  Rs 350.00    Rs 997.50
+-------------------------------------
+Subtotal:                              Rs 5642.50
+Discount:                                Rs 20.00
+TOTAL:                                 Rs 5622.50
+
+Payment Method: Cash
+Cash Tendered:                         Rs 6000.00
+Change:                                 Rs 377.50
+
+=====================================
+    Thank you for shopping with us!  
+=====================================
+

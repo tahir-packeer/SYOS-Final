@@ -18,60 +18,59 @@ public class ReportAppService {
     private final StockBatchRepository stockBatchRepository;
     private final ShelfStockRepository shelfStockRepository;
     private final Logger logger;
-    
+
     public ReportAppService(BillRepository billRepository,
-                           StockBatchRepository stockBatchRepository,
-                           ShelfStockRepository shelfStockRepository,
-                           Logger logger) {
+            StockBatchRepository stockBatchRepository,
+            ShelfStockRepository shelfStockRepository,
+            Logger logger) {
         this.billRepository = billRepository;
         this.stockBatchRepository = stockBatchRepository;
         this.shelfStockRepository = shelfStockRepository;
         this.logger = logger;
     }
-    
+
     /**
      * Generate daily sales report.
      */
-    public DailySalesReport generateDailySalesReport(LocalDate date, 
-                                                     TransactionType transactionType) {
+    public DailySalesReport generateDailySalesReport(LocalDate date,
+            TransactionType transactionType) {
         try {
             List<Bill> bills;
-            
+
             if (transactionType == null) {
                 bills = billRepository.findByDate(date);
             } else {
                 bills = billRepository.findByDateAndType(date, transactionType);
             }
-            
+
             Map<String, SalesItemSummary> itemSummaries = new HashMap<>();
             Money totalRevenue = Money.zero();
-            
+
             for (Bill bill : bills) {
                 totalRevenue = totalRevenue.add(bill.getTotalAmount());
-                
+
                 for (BillItem billItem : bill.getItems()) {
                     String itemCode = billItem.getItem().getCode().toString();
                     String itemName = billItem.getItem().getName();
-                    
+
                     SalesItemSummary summary = itemSummaries.getOrDefault(
-                        itemCode, 
-                        new SalesItemSummary(itemCode, itemName)
-                    );
-                    
+                            itemCode,
+                            new SalesItemSummary(itemCode, itemName));
+
                     summary.addSale(billItem.getQuantity(), billItem.getTotalPrice());
                     itemSummaries.put(itemCode, summary);
                 }
             }
-            
-            return new DailySalesReport(date, transactionType, totalRevenue, 
-                                       new ArrayList<>(itemSummaries.values()));
-                                       
+
+            return new DailySalesReport(date, transactionType, totalRevenue,
+                    new ArrayList<>(itemSummaries.values()));
+
         } catch (Exception e) {
             logger.error("Error generating daily sales report", e);
             throw new RuntimeException("Failed to generate sales report", e);
         }
     }
-    
+
     /**
      * Generate stock report.
      */
@@ -84,7 +83,7 @@ public class ReportAppService {
             throw new RuntimeException("Failed to generate stock report", e);
         }
     }
-    
+
     /**
      * Generate reorder level report.
      */
@@ -97,104 +96,174 @@ public class ReportAppService {
             throw new RuntimeException("Failed to generate reorder report", e);
         }
     }
-    
+
     /**
      * Generate bill report (all transactions).
      */
     public BillReport generateBillReport(LocalDate startDate, LocalDate endDate) {
         try {
             List<Bill> allBills = billRepository.findAll();
-            
+
             // Filter by date range if provided
             if (startDate != null && endDate != null) {
                 allBills = allBills.stream()
-                    .filter(bill -> {
-                        LocalDate billDate = bill.getDateTime().toLocalDate();
-                        return !billDate.isBefore(startDate) && !billDate.isAfter(endDate);
-                    })
-                    .collect(Collectors.toList());
+                        .filter(bill -> {
+                            LocalDate billDate = bill.getDateTime().toLocalDate();
+                            return !billDate.isBefore(startDate) && !billDate.isAfter(endDate);
+                        })
+                        .collect(Collectors.toList());
             }
-            
+
             return new BillReport(allBills);
         } catch (Exception e) {
             logger.error("Error generating bill report", e);
             throw new RuntimeException("Failed to generate bill report", e);
         }
     }
-    
+
+    /**
+     * Generate pending shelving report - items that need to be moved from stock
+     * batches to shelf.
+     */
+    public PendingShelvingReport generatePendingShelvingReport() {
+        try {
+            List<StockBatch> allBatches = stockBatchRepository.findAll();
+
+            // Filter to only include batches with remaining stock
+            List<StockBatch> pendingBatches = allBatches.stream()
+                    .filter(batch -> batch.getQuantityRemaining() > 0)
+                    .collect(Collectors.toList());
+
+            return new PendingShelvingReport(pendingBatches);
+        } catch (Exception e) {
+            logger.error("Error generating pending shelving report", e);
+            throw new RuntimeException("Failed to generate pending shelving report", e);
+        }
+    }
+
     // Report DTOs
-    
+
     public static class DailySalesReport {
         private final LocalDate date;
         private final TransactionType transactionType;
         private final Money totalRevenue;
         private final List<SalesItemSummary> itemSummaries;
-        
+
         public DailySalesReport(LocalDate date, TransactionType transactionType,
-                               Money totalRevenue, List<SalesItemSummary> itemSummaries) {
+                Money totalRevenue, List<SalesItemSummary> itemSummaries) {
             this.date = date;
             this.transactionType = transactionType;
             this.totalRevenue = totalRevenue;
             this.itemSummaries = itemSummaries;
         }
-        
-        public LocalDate getDate() { return date; }
-        public TransactionType getTransactionType() { return transactionType; }
-        public Money getTotalRevenue() { return totalRevenue; }
-        public List<SalesItemSummary> getItemSummaries() { return itemSummaries; }
+
+        public LocalDate getDate() {
+            return date;
+        }
+
+        public TransactionType getTransactionType() {
+            return transactionType;
+        }
+
+        public Money getTotalRevenue() {
+            return totalRevenue;
+        }
+
+        public List<SalesItemSummary> getItemSummaries() {
+            return itemSummaries;
+        }
     }
-    
+
     public static class SalesItemSummary {
         private final String itemCode;
         private final String itemName;
         private int totalQuantity;
         private Money totalRevenue;
-        
+
         public SalesItemSummary(String itemCode, String itemName) {
             this.itemCode = itemCode;
             this.itemName = itemName;
             this.totalQuantity = 0;
             this.totalRevenue = Money.zero();
         }
-        
+
         public void addSale(int quantity, Money revenue) {
             this.totalQuantity += quantity;
             this.totalRevenue = this.totalRevenue.add(revenue);
         }
-        
-        public String getItemCode() { return itemCode; }
-        public String getItemName() { return itemName; }
-        public int getTotalQuantity() { return totalQuantity; }
-        public Money getTotalRevenue() { return totalRevenue; }
+
+        public String getItemCode() {
+            return itemCode;
+        }
+
+        public String getItemName() {
+            return itemName;
+        }
+
+        public int getTotalQuantity() {
+            return totalQuantity;
+        }
+
+        public Money getTotalRevenue() {
+            return totalRevenue;
+        }
     }
-    
+
     public static class StockReport {
         private final List<StockBatch> batches;
-        
+
         public StockReport(List<StockBatch> batches) {
             this.batches = batches;
         }
-        
-        public List<StockBatch> getBatches() { return batches; }
+
+        public List<StockBatch> getBatches() {
+            return batches;
+        }
     }
-    
+
     public static class ReorderReport {
         private final List<ShelfStock> itemsBelowReorder;
-        
+
         public ReorderReport(List<ShelfStock> itemsBelowReorder) {
             this.itemsBelowReorder = itemsBelowReorder;
         }
-        
-        public List<ShelfStock> getItemsBelowReorder() { return itemsBelowReorder; }
+
+        public List<ShelfStock> getItemsBelowReorder() {
+            return itemsBelowReorder;
+        }
     }
-    
+
     public static class BillReport {
         private final List<Bill> bills;
-        
+
         public BillReport(List<Bill> bills) {
             this.bills = bills;
         }
-        
-        public List<Bill> getBills() { return bills; }
+
+        public List<Bill> getBills() {
+            return bills;
+        }
+    }
+
+    public static class PendingShelvingReport {
+        private final List<StockBatch> pendingBatches;
+
+        public PendingShelvingReport(List<StockBatch> pendingBatches) {
+            this.pendingBatches = pendingBatches;
+        }
+
+        public List<StockBatch> getPendingBatches() {
+            return pendingBatches;
+        }
+
+        public int getTotalPendingBatches() {
+            return pendingBatches.size();
+        }
+
+        public int getTotalPendingQuantity() {
+            return pendingBatches.stream()
+                    .mapToInt(StockBatch::getQuantityRemaining)
+                    .sum();
+        }
     }
 }

@@ -94,7 +94,7 @@ public class BillRepositoryImpl implements BillRepository {
             if (conn != null) {
                 try {
                     conn.setAutoCommit(true);
-                } catch (ClassNotFoundException | SQLException e) {
+                } catch (SQLException e) {
                     e.printStackTrace();
                 }
                 dbConnection.closeConnection(conn);
@@ -295,7 +295,7 @@ public class BillRepositoryImpl implements BillRepository {
     /**
      * Helper method to map ResultSet to Bill entity.
      */
-    private Bill mapResultSetToBill(ResultSet rs) throws SQLException {
+    private Bill mapResultSetToBill(ResultSet rs) throws ClassNotFoundException, SQLException {
         Long billId = rs.getLong("bill_id");
 
         Money cashTendered = rs.getBigDecimal("cash_tendered") != null ? new Money(rs.getBigDecimal("cash_tendered"))
@@ -330,7 +330,7 @@ public class BillRepositoryImpl implements BillRepository {
     /**
      * Helper method to load bill items for a given bill ID.
      */
-    private List<BillItem> loadBillItems(Long billId) throws SQLException {
+    private List<BillItem> loadBillItems(Long billId) throws ClassNotFoundException, SQLException {
         List<BillItem> items = new ArrayList<>();
         String sql = "SELECT bi.*, i.name, i.code, i.unit_price, i.discount, i.reorder_level " +
                 "FROM bill_item bi JOIN item i ON bi.item_id = i.item_id " +

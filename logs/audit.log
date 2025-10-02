@@ -62,3 +62,43 @@
 2025-10-02 12:06:05.884 [org.syos.Main.main()] AUDIT AUDIT - User login failed - Username: cashier
 2025-10-02 12:06:13.879 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: admin
 2025-10-02 12:06:13.881 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 1, Session: 57ee0cd3
+2025-10-02 12:59:05.087 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: admin
+2025-10-02 12:59:05.093 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 1, Session: 55efff32
+2025-10-02 13:00:03.757 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: admin
+2025-10-02 13:00:03.761 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 1, Session: 0e8f214e
+2025-10-02 13:03:45.509 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: admin
+2025-10-02 13:03:45.513 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 3, Session: ce94ff3d
+2025-10-02 13:24:55.401 [org.syos.Main.main()] AUDIT AUDIT - User logout - Username: admin
+2025-10-02 13:25:23.692 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: cashier
+2025-10-02 13:25:23.693 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 1, Session: 2560543f
+2025-10-02 13:31:51.463 [org.syos.Main.main()] AUDIT AUDIT - Transaction started - ID: 20251002-000001, Type: COUNTER
+2025-10-02 13:34:35.210 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: cashier
+2025-10-02 13:34:35.215 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 1, Session: be6091ab
+2025-10-02 13:37:30.703 [org.syos.Main.main()] AUDIT AUDIT - Transaction started - ID: 20251002-000001, Type: COUNTER
+2025-10-02 13:37:30.829 [org.syos.Main.main()] AUDIT AUDIT - Inventory change - Item: MILK001, Quantity: -5, Reason: Sale - COUNTER
+2025-10-02 13:37:30.878 [org.syos.Main.main()] AUDIT AUDIT - Inventory change - Item: SOAP001, Quantity: -4, Reason: Sale - COUNTER
+2025-10-02 13:37:30.925 [org.syos.Main.main()] AUDIT AUDIT - Inventory change - Item: BREAD001, Quantity: -3, Reason: Sale - COUNTER
+2025-10-02 13:37:30.970 [org.syos.Main.main()] AUDIT AUDIT - Inventory change - Item: EGG001, Quantity: -3, Reason: Sale - COUNTER
+2025-10-02 13:37:30.972 [org.syos.Main.main()] AUDIT AUDIT - Transaction completed - ID: 20251002-000001, Type: COUNTER
+2025-10-02 13:37:30.977 [org.syos.Main.main()] AUDIT AUDIT - Bill printed successfully - ID: 20251002-000001
+2025-10-02 13:37:30.978 [org.syos.Main.main()] AUDIT AUDIT - Payment processed - Bill: COUNTER_SALE, Method: CASH, Amount: $6000.0
+2025-10-02 13:46:43.637 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: Cashier
+2025-10-02 13:46:43.641 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 1, Session: efe62a4b
+2025-10-02 13:47:04.268 [org.syos.Main.main()] AUDIT AUDIT - User logout - Username: Cashier
+2025-10-02 13:47:15.128 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: Admin
+2025-10-02 13:47:15.129 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 3, Session: a151ad38
+2025-10-02 13:49:39.342 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: admin
+2025-10-02 13:49:39.346 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 3, Session: a26ca209
+2025-10-02 13:49:57.200 [org.syos.Main.main()] AUDIT AUDIT - User logout - Username: admin
+2025-10-02 13:50:12.413 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: Manager
+2025-10-02 13:50:12.413 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 2, Session: f7da313b
+2025-10-02 13:57:51.694 [org.syos.Main.main()] AUDIT AUDIT - User logout - Username: Manager
+2025-10-02 14:01:26.177 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: Cashier
+2025-10-02 14:01:26.180 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 1, Session: 48848a27
+2025-10-02 14:02:43.747 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: admin
+2025-10-02 14:02:43.752 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 3, Session: 24fa9e7b
+2025-10-02 14:02:51.763 [org.syos.Main.main()] AUDIT AUDIT - User logout - Username: admin
+2025-10-02 14:02:59.511 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: manager
+2025-10-02 14:02:59.512 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 2, Session: d40c44d1
+2025-10-02 14:04:13.893 [org.syos.Main.main()] AUDIT AUDIT - User login successful - Username: manager
+2025-10-02 14:04:13.899 [org.syos.Main.main()] AUDIT AUDIT - Session initialized - User: 2, Session: 1f4eda4e

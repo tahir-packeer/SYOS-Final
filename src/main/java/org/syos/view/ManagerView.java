@@ -157,7 +157,8 @@ public class ManagerView extends ConsoleView {
                     "Reorder Level Report",
                     "Bill Report",
                     "Counter Sales Report",
-                    "Online Sales Report"
+                    "Online Sales Report",
+                    "Pending Shelving Report"
             };
 
             int choice = displayMenu("REPORTS", options);
@@ -180,6 +181,9 @@ public class ManagerView extends ConsoleView {
                     break;
                 case 6:
                     onlineSalesReport();
+                    break;
+                case 7:
+                    pendingShelvingReport();
                     break;
                 case 0:
                     running = false;
@@ -311,7 +315,7 @@ public class ManagerView extends ConsoleView {
             System.out.println("Available Stock Batches:");
             controller.displayStockBatches();
             System.out.println();
-            
+
             String itemCode = getInput("Item Code: ");
             int quantity = getIntInput("Quantity to Move: ");
 
@@ -406,6 +410,12 @@ public class ManagerView extends ConsoleView {
         displayHeader("ONLINE SALES REPORT");
         String date = getInput("Enter Date (YYYY-MM-DD, or press Enter for today): ");
         controller.displayOnlineSalesReport(date.isEmpty() ? null : date);
+        pause();
+    }
+
+    private void pendingShelvingReport() {
+        displayHeader("PENDING SHELVING REPORT");
+        controller.displayPendingShelvingReport();
         pause();
     }
 

@@ -4,6 +4,7 @@ package org.syos.controller;
 import org.syos.application.usecase.*;
 import org.syos.domain.entity.*;
 import org.syos.domain.enums.TransactionType;
+import org.syos.domain.valueobject.Money;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -313,8 +314,80 @@ public class ManagerController {
         }
     }
 
+    public void displayPendingShelvingReport() {
+        try {
+            ReportAppService.PendingShelvingReport report = reportService.generatePendingShelvingReport();
+            List<StockBatch> pendingBatches = report.getPendingBatches();
+
+            System.out.println("\n" + "=".repeat(100));
+            System.out.println("                              PENDING SHELVING REPORT");
+            System.out.println("=".repeat(100));
+            System.out.printf("%-12s %-25s %-10s %-15s %-15s %-15s\n",
+                    "Code", "Item Name", "Batch ID", "Available Qty", "Purchase Date", "Expiry Date");
+            System.out.println("=".repeat(100));
+
+            for (StockBatch batch : pendingBatches) {
+                System.out.printf("%-12s %-25s %-10d %-15d %-15s %-15s\n",
+                        batch.getItem().getCode().getCode(),
+                        truncate(batch.getItem().getName(), 25),
+                        batch.getBatchId(),
+                        batch.getQuantityRemaining(),
+                        batch.getPurchaseDate(),
+                        batch.getExpiryDate() != null ? batch.getExpiryDate().toString() : "No expiry");
+            }
+
+            System.out.println("=".repeat(100));
+            System.out.printf("Total pending batches: %d | Total quantity available for shelving: %d\n",
+                    report.getTotalPendingBatches(), report.getTotalPendingQuantity());
+            System.out.println("=".repeat(100));
+
+        } catch (Exception e) {
+            System.err.println("Error generating pending shelving report: " + e.getMessage());
+        }
+    }
+
     public void displayBillReport() {
-        System.out.println("\nBill report - would query BillRepository for all bills");
+        try {
+            // Get date range for the report (last 30 days by default)
+            LocalDate endDate = LocalDate.now();
+            LocalDate startDate = endDate.minusDays(30);
+
+            ReportAppService.BillReport report = reportService.generateBillReport(startDate, endDate);
+
+            System.out.println("\nDate Range: " + startDate + " to " + endDate);
+            System.out.println("Total Bills: " + report.getBills().size());
+
+            if (report.getBills().isEmpty()) {
+                System.out.println("No bills found in this period.");
+                return;
+            }
+
+            // Display bill summary
+            System.out.println("\n" + "=".repeat(120));
+            System.out.printf("%-20s %-15s %-15s %-20s %-25s %-15s%n",
+                    "Bill Number", "Date", "Type", "Customer", "Total Amount", "Payment");
+            System.out.println("=".repeat(120));
+
+            Money grandTotal = Money.zero();
+
+            for (Bill bill : report.getBills()) {
+                System.out.printf("%-20s %-15s %-15s %-20s %-25s %-15s%n",
+                        bill.getSerialNumber(),
+                        bill.getDateTime().toLocalDate(),
+                        bill.getTransactionType(),
+                        bill.getCustomerName() != null ? bill.getCustomerName() : "Walk-in",
+                        "Rs " + bill.getTotalAmount(),
+                        bill.getPaymentMethod());
+
+                grandTotal = grandTotal.add(bill.getTotalAmount());
+            }
+
+            System.out.println("=".repeat(120));
+            System.out.println("GRAND TOTAL: Rs " + grandTotal);
+
+        } catch (Exception e) {
+            System.err.println("Error generating bill report: " + e.getMessage());
+        }
     }
 
     // Customer Management

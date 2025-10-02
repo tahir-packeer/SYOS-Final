@@ -24,7 +24,7 @@ public class Main {
                         LoggingService.PerformanceMonitor startupMonitor = LoggingService
                                         .startPerformanceMonitoring("Application Startup");
 
-                        // Initialize database connection 
+                        // Initialize database connection
                         DBConnection dbConnection = DBConnection.getInstance();
                         LoggingService.logDatabaseOperation("INITIALIZE", "ConnectionPool", "MySQL database connected");
 

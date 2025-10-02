@@ -4,7 +4,9 @@ import org.syos.application.repository.WebsiteInventoryRepository;
 import org.syos.domain.entity.Item;
 import org.syos.domain.entity.WebsiteInventory;
 import org.syos.domain.valueobject.ItemCode;
+import org.syos.domain.valueobject.Money;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -60,7 +62,11 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
 
     @Override
     public Optional<WebsiteInventory> findByItemCode(ItemCode code) {
-        String sql = "SELECT wi.web_inventory_id, wi.item_id, wi.quantity FROM website_inventory wi WHERE wi.item_id = ?";
+        String sql = "SELECT wi.web_inventory_id, wi.item_id, wi.quantity, " +
+                "i.code, i.name, i.unit_price, i.discount, i.reorder_level " +
+                "FROM website_inventory wi " +
+                "JOIN item i ON wi.item_id = i.item_id " +
+                "WHERE i.code = ?";
 
         try (Connection conn = dbConnection.getConnection();
                 PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -69,7 +75,7 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(mapResultSetToWebsiteInventory(rs));
+                    return Optional.of(mapResultSetToWebsiteInventoryWithItem(rs));
                 }
             }
 
@@ -82,7 +88,11 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
 
     @Override
     public List<WebsiteInventory> findAll() {
-        String sql = "SELECT wi.web_inventory_id, wi.item_id, wi.quantity FROM website_inventory wi ORDER BY wi.item_id";
+        String sql = "SELECT wi.web_inventory_id, wi.item_id, wi.quantity, " +
+                "i.code, i.name, i.unit_price, i.discount, i.reorder_level " +
+                "FROM website_inventory wi " +
+                "JOIN item i ON wi.item_id = i.item_id " +
+                "ORDER BY wi.item_id";
         List<WebsiteInventory> inventories = new ArrayList<>();
 
         try (Connection conn = dbConnection.getConnection();
@@ -90,7 +100,7 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
                 ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                inventories.add(mapResultSetToWebsiteInventory(rs));
+                inventories.add(mapResultSetToWebsiteInventoryWithItem(rs));
             }
 
         } catch (ClassNotFoundException | SQLException e) {
@@ -102,7 +112,11 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
 
     @Override
     public List<WebsiteInventory> findAvailableItems() {
-        String sql = "SELECT wi.web_inventory_id, wi.item_id, wi.quantity FROM website_inventory wi WHERE wi.quantity > 0 ORDER BY wi.item_id";
+        String sql = "SELECT wi.web_inventory_id, wi.item_id, wi.quantity, " +
+                "i.code, i.name, i.unit_price, i.discount, i.reorder_level " +
+                "FROM website_inventory wi " +
+                "JOIN item i ON wi.item_id = i.item_id " +
+                "WHERE wi.quantity > 0 ORDER BY wi.item_id";
         List<WebsiteInventory> inventories = new ArrayList<>();
 
         try (Connection conn = dbConnection.getConnection();
@@ -110,7 +124,7 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
                 ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                inventories.add(mapResultSetToWebsiteInventory(rs));
+                inventories.add(mapResultSetToWebsiteInventoryWithItem(rs));
             }
 
         } catch (ClassNotFoundException | SQLException e) {
@@ -164,16 +178,33 @@ public class WebsiteInventoryRepositoryImpl implements WebsiteInventoryRepositor
 
     private WebsiteInventory mapResultSetToWebsiteInventory(ResultSet rs) throws SQLException {
         Long webInventoryId = rs.getLong("web_inventory_id");
-        String itemCodeValue = rs.getString("item_id");
+        Long itemId = rs.getLong("item_id");
         int quantity = rs.getInt("quantity");
 
-        // Get the item by item code
-        ItemCode itemCode = new ItemCode(itemCodeValue);
-        Optional<Item> itemOpt = itemRepository.findByCode(itemCode);
+        // Get the item by item ID
+        Optional<Item> itemOpt = itemRepository.findById(itemId);
         if (!itemOpt.isPresent()) {
-            throw new SQLException("Item not found for code: " + itemCodeValue);
+            throw new SQLException("Item not found for ID: " + itemId);
         }
 
         return new WebsiteInventory(webInventoryId, itemOpt.get(), quantity);
+    }
+
+    private WebsiteInventory mapResultSetToWebsiteInventoryWithItem(ResultSet rs) throws SQLException {
+        Long webInventoryId = rs.getLong("web_inventory_id");
+        Long itemId = rs.getLong("item_id");
+        int quantity = rs.getInt("quantity");
+
+        // Create item directly from the joined result set to avoid additional DB calls
+        ItemCode itemCode = new ItemCode(rs.getString("code"));
+        Item item = new Item(
+                itemId,
+                rs.getString("name"),
+                itemCode,
+                new Money(rs.getBigDecimal("unit_price")),
+                rs.getBigDecimal("discount"),
+                rs.getInt("reorder_level"));
+
+        return new WebsiteInventory(webInventoryId, item, quantity);
     }
 }
