@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashier Dashboard - SYOS POS</title>
+    <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <a href="#" class="navbar-brand">SYOS POS - Cashier</a>
+            <ul class="navbar-nav">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="billing.html">Billing</a></li>
+                <li><a href="customers.html">Customers</a></li>
+            </ul>
+            <div class="user-info">
+                <span id="userInfo">Loading...</span>
+                <button class="btn btn-secondary" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Welcome, Cashier!</h2>
+                    </div>
+                    <p>This is the cashier dashboard. From here you can:</p>
+                    <ul>
+                        <li>Process customer sales</li>
+                        <li>Print bills and receipts</li>
+                        <li>Manage customer information</li>
+                        <li>View items and inventory</li>
+                    </ul>
+                    
+                    <div class="row mt-20">
+                        <div class="col-2">
+                            <div class="card">
+                                <h3>Quick Billing</h3>
+                                <p>Start a new sale transaction</p>
+                                <a href="billing.html" class="btn btn-primary">New Sale</a>
+                            </div>
+                        </div>
+                        <div class="col-2">
+                            <div class="card">
+                                <h3>Customer Lookup</h3>
+                                <p>Find existing customers</p>
+                                <a href="customers.html" class="btn btn-secondary">Find Customer</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorMessage" class="error-message" style="display: none;"></div>
+    <div id="successMessage" class="success-message" style="display: none;"></div>
+
+    <script src="../js/common.js"></script>
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check session and display user info
+            const session = Utils.getSession();
+            if (session && session.fullName) {
+                document.getElementById('userInfo').textContent = session.fullName;
+            }
+
+            // Verify user has cashier role
+            if (!session || session.role !== 'CASHIER') {
+                Utils.showError('Access denied. Cashier role required.');
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 2000);
+            }
+        });
+
+        // Logout function
+        function logout() {
+            SessionManager.logout();
+        }
+    </script>
+</body>
+</html>

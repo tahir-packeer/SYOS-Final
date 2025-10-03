@@ -183,13 +183,13 @@ CREATE TABLE user
                                     (item_id)
 );
 
-                                    -- Sample data for testing
+                                    -- Sample data for testing (using simple passwords for demo)
                                     INSERT INTO user
                                         (username, password_hash, full_name, role)
                                     VALUES
-                                        ('cashier', '$HASHED_PASSWORD', 'John Cashier', 'CASHIER'),
-                                        ('manager', '$HASHED_PASSWORD', 'Jane Manager', 'MANAGER'),
-                                        ('admin', '$HASHED_PASSWORD', 'Admin User', 'ADMIN');
+                                        ('cashier', 'demo123', 'John Cashier', 'CASHIER'),
+                                        ('manager', 'demo123', 'Jane Manager', 'MANAGER'),
+                                        ('admin', 'demo123', 'Admin User', 'ADMIN');
 
                                     INSERT INTO item
                                         (name, code, unit_price, discount, reorder_level)
