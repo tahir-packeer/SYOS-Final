@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager - Stock Management</title>
+    <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>SYOS POS - Stock Management</h1>
+            <div class="user-info">
+                <span id="username">Manager</span>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="stock-section">
+                <h2>Stock Information</h2>
+                
+                <div class="button-group">
+                    <button onclick="getAllStock()" class="btn btn-primary">View All Stock</button>
+                    <button onclick="getLowStock()" class="btn btn-warning">Low Stock Alerts</button>
+                    <button onclick="searchStock()" class="btn btn-info">Search Stock</button>
+                </div>
+
+                <div class="search-box" id="searchBox" style="display: none;">
+                    <input type="text" id="searchQuery" placeholder="Enter item name to search...">
+                    <button onclick="performSearch()" class="btn btn-primary">Search</button>
+                </div>
+
+                <div id="stockResults" class="results-section">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = '/syos-pos/api';
+
+        // Get all stock information
+        async function getAllStock() {
+            try {
+                const response = await fetch(API_BASE + '/stock/all');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayStockResults(data.data, 'All Stock Information');
+                } else {
+                    displayError(data.error || 'Failed to fetch stock information');
+                }
+            } catch (error) {
+                displayError('Error: ' + error.message);
+            }
+        }
+
+        // Get low stock alerts
+        async function getLowStock() {
+            try {
+                const response = await fetch(API_BASE + '/stock/alerts');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayAlerts(data.data, 'Low Stock Alerts');
+                } else {
+                    displayError(data.error || 'Failed to fetch stock alerts');
+                }
+            } catch (error) {
+                displayError('Error: ' + error.message);
+            }
+        }
+
+        // Show search box
+        function searchStock() {
+            const searchBox = document.getElementById('searchBox');
+            searchBox.style.display = searchBox.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Perform search
+        async function performSearch() {
+            const query = document.getElementById('searchQuery').value.trim();
+            if (!query) {
+                displayError('Please enter a search term');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + '/stock/search?q=' + encodeURIComponent(query));
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayStockResults(data.data, 'Search Results for "' + query + '"');
+                } else {
+                    displayError(data.error || 'Failed to search stock');
+                }
+            } catch (error) {
+                displayError('Error: ' + error.message);
+            }
+        }
+
+        // Display stock results
+        function displayStockResults(stockData, title) {
+            const resultsDiv = document.getElementById('stockResults');
+            
+            if (!stockData || stockData.length === 0) {
+                resultsDiv.innerHTML = `
+                    <h3>${title}</h3>
+                    <p>No stock information found.</p>
+                `;
+                return;
+            }
+
+            let html = `
+                <h3>${title}</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Code</th>
+                            <th>Unit Price</th>
+                            <th>Current Stock</th>
+                            <th>Reorder Level</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            stockData.forEach(item => {
+                const status = item.isLowStock ? 
+                    '<span class="status-warning">LOW STOCK</span>' : 
+                    '<span class="status-ok">OK</span>';
+                
+                html += `
+                    <tr>
+                        <td>${item.itemName}</td>
+                        <td>${item.itemCode}</td>
+                        <td>$${item.unitPrice.toFixed(2)}</td>
+                        <td>${item.currentStock}</td>
+                        <td>${item.reorderLevel}</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            resultsDiv.innerHTML = html;
+        }
+
+        // Display alert results
+        function displayAlerts(alertData, title) {
+            const resultsDiv = document.getElementById('stockResults');
+            
+            if (!alertData || alertData.length === 0) {
+                resultsDiv.innerHTML = `
+                    <h3>${title}</h3>
+                    <p>No low stock alerts found.</p>
+                `;
+                return;
+            }
+
+            let html = `
+                <h3>${title}</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Code</th>
+                            <th>Current Stock</th>
+                            <th>Reorder Level</th>
+                            <th>Shortage</th>
+                            <th>Priority</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            alertData.forEach(alert => {
+                html += `
+                    <tr class="alert-row">
+                        <td>${alert.itemName}</td>
+                        <td>${alert.itemCode}</td>
+                        <td>${alert.currentStock}</td>
+                        <td>${alert.reorderLevel}</td>
+                        <td>${alert.shortage}</td>
+                        <td><span class="status-warning">${alert.priority}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            resultsDiv.innerHTML = html;
+        }
+
+        // Display error message
+        function displayError(message) {
+            const resultsDiv = document.getElementById('stockResults');
+            resultsDiv.innerHTML = `
+                <div class="error-message">
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // Logout function
+        function logout() {
+            window.location.href = '../index.html';
+        }
+
+        // Load initial stock data
+        window.onload = function() {
+            getAllStock();
+        };
+    </script>
+
+    <style>
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .data-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .data-table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .status-ok {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .status-warning {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .alert-row {
+            background-color: #fff3cd;
+        }
+
+        .search-box {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+
+        .search-box input {
+            padding: 8px 12px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .error-message {
+            padding: 15px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            color: #721c24;
+        }
+
+        .button-group {
+            margin: 20px 0;
+        }
+
+        .button-group .btn {
+            margin-right: 10px;
+        }
+    </style>
+</body>
+</html>

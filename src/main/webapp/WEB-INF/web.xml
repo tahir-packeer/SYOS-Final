@@ -70,10 +70,40 @@
         <url-pattern>/api/items/*</url-pattern>
     </servlet-mapping>
 
+    <!-- Billing Servlet -->
+    <servlet>
+        <servlet-name>BillingServlet</servlet-name>
+        <servlet-class>org.syos.controller.servlet.BillingServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>BillingServlet</servlet-name>
+        <url-pattern>/api/billing/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- Stock Management Servlet -->
+    <servlet>
+        <servlet-name>StockServlet</servlet-name>
+        <servlet-class>org.syos.controller.servlet.StockServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>StockServlet</servlet-name>
+        <url-pattern>/api/stock/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- Customer Management Servlet -->
+    <servlet>
+        <servlet-name>CustomerServlet</servlet-name>
+        <servlet-class>org.syos.controller.servlet.CustomerServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>CustomerServlet</servlet-name>
+        <url-pattern>/api/customers/*</url-pattern>
+    </servlet-mapping>
+
     <!-- TODO: Additional servlets will be added as we implement them:
-         - BillingServlet for /api/billing/*
-         - StockServlet for /api/stock/*
-         - CustomerServlet for /api/customers/*
          - OnlineCustomerServlet for /api/online-customers/*
          - OrderServlet for /api/orders/*
          - ReportServlet for /api/reports/*

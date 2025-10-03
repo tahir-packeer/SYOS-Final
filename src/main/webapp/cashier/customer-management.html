@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Management - SYOS POS</title>
+    <link rel="stylesheet" href="../css/common.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>SYOS POS - Customer Management</h1>
+            <div class="user-info">
+                <span id="username">Staff</span>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="customer-section">
+                <h2>Customer Management</h2>
+                
+                <div class="button-group">
+                    <button onclick="getAllCustomers()" class="btn btn-primary">View All Customers</button>
+                    <button onclick="showSearch()" class="btn btn-info">Search Customers</button>
+                    <button onclick="showAddForm()" class="btn btn-success">Add New Customer</button>
+                </div>
+
+                <!-- Search Box -->
+                <div class="search-box" id="searchBox" style="display: none;">
+                    <input type="text" id="searchQuery" placeholder="Enter customer name to search...">
+                    <button onclick="searchCustomers()" class="btn btn-primary">Search</button>
+                </div>
+
+                <!-- Add Customer Form -->
+                <div class="form-section" id="addForm" style="display: none;">
+                    <h3>Add New Customer</h3>
+                    <form id="customerForm">
+                        <div class="form-group">
+                            <label for="customerName">Customer Name:</label>
+                            <input type="text" id="customerName" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="customerPhone">Phone Number:</label>
+                            <input type="tel" id="customerPhone" name="phone" required>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="button" onclick="saveCustomer()" class="btn btn-success">Save Customer</button>
+                            <button type="button" onclick="cancelForm()" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Edit Customer Form -->
+                <div class="form-section" id="editForm" style="display: none;">
+                    <h3>Edit Customer</h3>
+                    <form id="editCustomerForm">
+                        <input type="hidden" id="editCustomerId">
+                        <div class="form-group">
+                            <label for="editCustomerName">Customer Name:</label>
+                            <input type="text" id="editCustomerName" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="editCustomerPhone">Phone Number:</label>
+                            <input type="tel" id="editCustomerPhone" name="phone" required>
+                        </div>
+                        <div class="form-buttons">
+                            <button type="button" onclick="updateCustomer()" class="btn btn-success">Update Customer</button>
+                            <button type="button" onclick="cancelForm()" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Results Display -->
+                <div id="customerResults" class="results-section">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Base URL
+        const API_BASE = '/syos-pos/api';
+
+        // Get all customers
+        async function getAllCustomers() {
+            hideAllForms();
+            
+            try {
+                const response = await fetch(API_BASE + '/customers/all');
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayCustomers(data.data, 'All Customers');
+                } else {
+                    displayError(data.error || 'Failed to fetch customers');
+                }
+            } catch (error) {
+                displayError('Error: ' + error.message);
+            }
+        }
+
+        // Show search box
+        function showSearch() {
+            hideAllForms();
+            const searchBox = document.getElementById('searchBox');
+            searchBox.style.display = 'block';
+            document.getElementById('searchQuery').focus();
+        }
+
+        // Search customers
+        async function searchCustomers() {
+            const query = document.getElementById('searchQuery').value.trim();
+            if (!query) {
+                displayError('Please enter a search term');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + '/customers/search?q=' + encodeURIComponent(query));
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayCustomers(data.data, 'Search Results for "' + query + '"');
+                } else {
+                    displayError(data.error || 'Failed to search customers');
+                }
+            } catch (error) {
+                displayError('Error: ' + error.message);
+            }
+        }
+
+        // Show add customer form
+        function showAddForm() {
+            hideAllForms();
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('customerName').focus();
+        }
+
+        // Save new customer
+        async function saveCustomer() {
+            const name = document.getElementById('customerName').value.trim();
+            const phone = document.getElementById('customerPhone').value.trim();
+
+            if (!name || !phone) {
+                displayError('Please fill in all required fields');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + '/customers/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, phone: phone })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySuccess('Customer added successfully');
+                    cancelForm();
+                    getAllCustomers(); // Refresh the list
+                } else {
+                    displayError(data.error || 'Failed to add customer');
+                }
+            } catch (error) {
+                displayError('Error: ' + error.message);
+            }
+        }
+
+        // Show edit form for customer
+        function editCustomer(customerId, name, phone) {
+            hideAllForms();
+            document.getElementById('editForm').style.display = 'block';
+            document.getElementById('editCustomerId').value = customerId;
+            document.getElementById('editCustomerName').value = name;
+            document.getElementById('editCustomerPhone').value = phone;
+            document.getElementById('editCustomerName').focus();
+        }
+
+        // Update customer
+        async function updateCustomer() {
+            const customerId = document.getElementById('editCustomerId').value;
+            const name = document.getElementById('editCustomerName').value.trim();
+            const phone = document.getElementById('editCustomerPhone').value.trim();
+
+            if (!name || !phone) {
+                displayError('Please fill in all required fields');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + '/customers/' + customerId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name, phone: phone })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySuccess('Customer updated successfully');
+                    cancelForm();
+                    getAllCustomers(); // Refresh the list
+                } else {
+                    displayError(data.error || 'Failed to update customer');
+                }
+            } catch (error) {
+                displayError('Error: ' + error.message);
+            }
+        }
+
+        // Delete customer
+        async function deleteCustomer(customerId, customerName) {
+            if (!confirm('Are you sure you want to delete customer "' + customerName + '"?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(API_BASE + '/customers/' + customerId, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    displaySuccess('Customer deleted successfully');
+                    getAllCustomers(); // Refresh the list
+                } else {
+                    displayError(data.error || 'Failed to delete customer');
+                }
+            } catch (error) {
+                displayError('Error: ' + error.message);
+            }
+        }
+
+        // Cancel form
+        function cancelForm() {
+            hideAllForms();
+            // Clear form fields
+            document.getElementById('customerForm').reset();
+            document.getElementById('editCustomerForm').reset();
+        }
+
+        // Hide all forms
+        function hideAllForms() {
+            document.getElementById('searchBox').style.display = 'none';
+            document.getElementById('addForm').style.display = 'none';
+            document.getElementById('editForm').style.display = 'none';
+        }
+
+        // Display customers
+        function displayCustomers(customers, title) {
+            const resultsDiv = document.getElementById('customerResults');
+            
+            if (!customers || customers.length === 0) {
+                resultsDiv.innerHTML = `
+                    <h3>${title}</h3>
+                    <p>No customers found.</p>
+                `;
+                return;
+            }
+
+            let html = `
+                <h3>${title}</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            customers.forEach(customer => {
+                html += `
+                    <tr>
+                        <td>${customer.customerId}</td>
+                        <td>${customer.name}</td>
+                        <td>${customer.phone}</td>
+                        <td>
+                            <button onclick="editCustomer(${customer.customerId}, '${customer.name}', '${customer.phone}')" 
+                                    class="btn btn-small btn-info">Edit</button>
+                            <button onclick="deleteCustomer(${customer.customerId}, '${customer.name}')" 
+                                    class="btn btn-small btn-danger">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            resultsDiv.innerHTML = html;
+        }
+
+        // Display error message
+        function displayError(message) {
+            const resultsDiv = document.getElementById('customerResults');
+            resultsDiv.innerHTML = `
+                <div class="error-message">
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // Display success message
+        function displaySuccess(message) {
+            const resultsDiv = document.getElementById('customerResults');
+            resultsDiv.innerHTML = `
+                <div class="success-message">
+                    <h3>Success</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+
+        // Logout function
+        function logout() {
+            window.location.href = '../index.html';
+        }
+
+        // Load initial data
+        window.onload = function() {
+            getAllCustomers();
+        };
+    </script>
+
+    <style>
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .data-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .data-table tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .search-box, .form-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            max-width: 400px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .form-buttons {
+            margin-top: 20px;
+        }
+
+        .form-buttons .btn {
+            margin-right: 10px;
+        }
+
+        .search-box input {
+            padding: 8px 12px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+        }
+
+        .results-section {
+            margin-top: 30px;
+        }
+
+        .error-message {
+            padding: 15px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            color: #721c24;
+        }
+
+        .success-message {
+            padding: 15px;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            color: #155724;
+        }
+
+        .button-group {
+            margin: 20px 0;
+        }
+
+        .button-group .btn {
+            margin-right: 10px;
+        }
+
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+    </style>
+</body>
+</html>

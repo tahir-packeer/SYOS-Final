@@ -7,3 +7,7 @@
 2025-10-03 15:48:02.471 [main] AUDIT AUDIT - Price change - Item: ITEM-001, Old: $10.0, New: $12.0
 2025-10-03 15:48:02.476 [main] AUDIT AUDIT - Customer registered - ID: CUST-456, Type: ONLINE
 2025-10-03 15:48:02.640 [main] AUDIT AUDIT - User logout - Username: john.doe
+2025-10-03 16:26:03.326 [main] AUDIT AUDIT - User login successful - Username: admin
+2025-10-03 16:26:03.330 [main] AUDIT AUDIT - Session initialized - User: 3, Session: f73848fb
+2025-10-03 16:26:07.674 [main] AUDIT AUDIT - User logout - Username: admin
+2025-10-03 16:26:38.092 [main] AUDIT AUDIT - User login failed - Username: manager

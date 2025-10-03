@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashier - SYOS POS</title>
+    <link rel="stylesheet" href="../css/common.css">
+    <style>
+        .billing-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .billing-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .search-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .cart-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .search-results {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .item-result {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .item-result:hover {
+            background-color: #e3f2fd;
+        }
+
+        .item-result:last-child {
+            border-bottom: none;
+        }
+
+        .item-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .item-code {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .item-price {
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .item-discount {
+            color: #d84315;
+            font-size: 0.9em;
+        }
+
+        .cart-items {
+            min-height: 300px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qty-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .qty-btn:hover {
+            background: #0056b3;
+        }
+
+        .qty-input {
+            width: 60px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .remove-btn:hover {
+            background: #c82333;
+        }
+
+        .cart-total {
+            border-top: 2px solid #007bff;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .total-final {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #007bff;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+        }
+
+        .checkout-btn:hover {
+            background: #218838;
+        }
+
+        .checkout-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            .billing-layout {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="nav-container">
+            <div class="logo">SYOS POS - Cashier</div>
+            <nav class="nav-menu">
+                <a href="dashboard.html" class="nav-link active">Billing</a>
+                <a href="../index.html" class="nav-link">Home</a>
+                <a href="#" class="nav-link" onclick="logout()">Logout</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="billing-container">
+        <h1>Point of Sale - Billing System</h1>
+        
+        <div class="billing-layout">
+            <!-- Item Search Section -->
+            <div class="search-section">
+                <h3>Search Items</h3>
+                <input 
+                    type="text" 
+                    id="itemSearch" 
+                    class="search-box" 
+                    placeholder="Search items by name..."
+                    oninput="searchItems()"
+                >
+                <div id="itemResults" class="search-results">
+                    <div style="padding: 20px; text-align: center; color: #666;">
+                        Type to search for items...
+                    </div>
+                </div>
+
+                <h3 style="margin-top: 30px;">Customer Information (Optional)</h3>
+                <input 
+                    type="text" 
+                    id="customerSearch" 
+                    class="search-box" 
+                    placeholder="Search customers by name..."
+                    oninput="searchCustomers()"
+                >
+                <div id="selectedCustomer" style="margin-top: 10px; color: #666;">
+                    No customer selected (Walk-in sale)
+                </div>
+            </div>
+
+            <!-- Shopping Cart Section -->
+            <div class="cart-section">
+                <h3>Shopping Cart</h3>
+                <div id="cartItems" class="cart-items">
+                    <div style="text-align: center; color: #666; padding: 50px 20px;">
+                        No items in cart
+                    </div>
+                </div>
+
+                <div class="cart-total" id="cartTotal" style="display: none;">
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span id="subtotal">LKR 0.00</span>
+                    </div>
+                    <div class="total-row">
+                        <span>Discount:</span>
+                        <span id="discount">LKR 0.00</span>
+                    </div>
+                    <div class="total-row total-final">
+                        <span>Total:</span>
+                        <span id="total">LKR 0.00</span>
+                    </div>
+                </div>
+
+                <button class="checkout-btn" id="checkoutBtn" onclick="processCheckout()" disabled>
+                    Process Payment
+                </button>
+            </div>
+        </div>
+
+        <div id="messageArea"></div>
+    </div>
+
+    <script src="../js/common.js"></script>
+    <script>
+        let cart = [];
+        let selectedCustomer = null;
+        let searchTimeout = null;
+
+        // Search items with debouncing
+        function searchItems() {
+            const query = document.getElementById('itemSearch').value.trim();
+            
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                document.getElementById('itemResults').innerHTML = 
+                    '<div style="padding: 20px; text-align: center; color: #666;">Type to search for items...</div>';
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                fetch(`/syos-pos/api/billing/items/search?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            displayItemResults(data.data);
+                        } else {
+                            showError('Failed to search items: ' + (data.error || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Search error:', error);
+                        showError('Error searching items. Please try again.');
+                    });
+            }, 300);
+        }
+
+        // Display item search results
+        function displayItemResults(items) {
+            const resultsDiv = document.getElementById('itemResults');
+            
+            if (items.length === 0) {
+                resultsDiv.innerHTML = 
+                    '<div style="padding: 20px; text-align: center; color: #666;">No items found</div>';
+                return;
+            }
+
+            resultsDiv.innerHTML = items.map(item => `
+                <div class="item-result" onclick="addToCart(${item.itemId}, '${item.name}', '${item.code}', ${item.price}, ${item.discount})">
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-code">Code: ${item.code}</div>
+                    <div class="item-price">LKR ${item.price.toFixed(2)}</div>
+                    ${item.discount > 0 ? `<div class="item-discount">${item.discount}% discount</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Add item to cart
+        function addToCart(itemId, name, code, price, discount) {
+            const existingItem = cart.find(item => item.itemId === itemId);
+            
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({
+                    itemId: itemId,
+                    name: name,
+                    code: code,
+                    price: price,
+                    discount: discount,
+                    quantity: 1
+                });
+            }
+            
+            updateCartDisplay();
+            showSuccess(`Added ${name} to cart`);
+        }
+
+        // Update cart display
+        function updateCartDisplay() {
+            const cartDiv = document.getElementById('cartItems');
+            const totalDiv = document.getElementById('cartTotal');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+
+            if (cart.length === 0) {
+                cartDiv.innerHTML = '<div style="text-align: center; color: #666; padding: 50px 20px;">No items in cart</div>';
+                totalDiv.style.display = 'none';
+                checkoutBtn.disabled = true;
+                return;
+            }
+
+            // Display cart items
+            cartDiv.innerHTML = cart.map((item, index) => {
+                const itemTotal = calculateItemTotal(item);
+                return `
+                    <div class="cart-item">
+                        <div>
+                            <div class="item-name">${item.name}</div>
+                            <div class="item-code">${item.code} - LKR ${item.price.toFixed(2)}</div>
+                            ${item.discount > 0 ? `<div class="item-discount">${item.discount}% discount</div>` : ''}
+                        </div>
+                        <div class="quantity-controls">
+                            <button class="qty-btn" onclick="updateQuantity(${index}, ${item.quantity - 1})">-</button>
+                            <input type="number" class="qty-input" value="${item.quantity}" 
+                                   onchange="updateQuantity(${index}, parseInt(this.value) || 1)" min="1">
+                            <button class="qty-btn" onclick="updateQuantity(${index}, ${item.quantity + 1})">+</button>
+                            <span style="margin-left: 15px; font-weight: bold;">LKR ${itemTotal.toFixed(2)}</span>
+                            <button class="remove-btn" onclick="removeFromCart(${index})">Remove</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Calculate and display totals
+            const totals = calculateTotals();
+            document.getElementById('subtotal').textContent = `LKR ${totals.subtotal.toFixed(2)}`;
+            document.getElementById('discount').textContent = `LKR ${totals.totalDiscount.toFixed(2)}`;
+            document.getElementById('total').textContent = `LKR ${totals.finalTotal.toFixed(2)}`;
+            
+            totalDiv.style.display = 'block';
+            checkoutBtn.disabled = false;
+        }
+
+        // Calculate item total with discount
+        function calculateItemTotal(item) {
+            const subtotal = item.price * item.quantity;
+            const discountAmount = subtotal * (item.discount / 100);
+            return subtotal - discountAmount;
+        }
+
+        // Calculate cart totals
+        function calculateTotals() {
+            let subtotal = 0;
+            let totalDiscount = 0;
+
+            cart.forEach(item => {
+                const itemSubtotal = item.price * item.quantity;
+                const itemDiscount = itemSubtotal * (item.discount / 100);
+                
+                subtotal += itemSubtotal;
+                totalDiscount += itemDiscount;
+            });
+
+            return {
+                subtotal: subtotal,
+                totalDiscount: totalDiscount,
+                finalTotal: subtotal - totalDiscount
+            };
+        }
+
+        // Update item quantity
+        function updateQuantity(index, newQuantity) {
+            if (newQuantity <= 0) {
+                removeFromCart(index);
+            } else {
+                cart[index].quantity = newQuantity;
+                updateCartDisplay();
+            }
+        }
+
+        // Remove item from cart
+        function removeFromCart(index) {
+            const removedItem = cart.splice(index, 1)[0];
+            updateCartDisplay();
+            showSuccess(`Removed ${removedItem.name} from cart`);
+        }
+
+        // Process checkout (simplified for demo)
+        function processCheckout() {
+            if (cart.length === 0) return;
+
+            const totals = calculateTotals();
+            const confirmMessage = `Process payment for LKR ${totals.finalTotal.toFixed(2)}?`;
+            
+            if (confirm(confirmMessage)) {
+                // Here you would integrate with the actual billing system
+                // For now, we'll just simulate a successful transaction
+                
+                showSuccess(`Payment processed successfully! Total: LKR ${totals.finalTotal.toFixed(2)}`);
+                
+                // Clear cart
+                cart = [];
+                selectedCustomer = null;
+                updateCartDisplay();
+                document.getElementById('itemSearch').value = '';
+                document.getElementById('customerSearch').value = '';
+                document.getElementById('selectedCustomer').textContent = 'No customer selected (Walk-in sale)';
+                document.getElementById('itemResults').innerHTML = 
+                    '<div style="padding: 20px; text-align: center; color: #666;">Type to search for items...</div>';
+            }
+        }
+
+        // Search customers (simplified)
+        function searchCustomers() {
+            const query = document.getElementById('customerSearch').value.trim();
+            
+            if (query.length < 2) {
+                selectedCustomer = null;
+                document.getElementById('selectedCustomer').textContent = 'No customer selected (Walk-in sale)';
+                return;
+            }
+
+            // In a real implementation, you would search customers via API
+            // For demo purposes, we'll just show the search is working
+            document.getElementById('selectedCustomer').textContent = `Searching for "${query}"...`;
+        }
+
+        // Utility functions for messages
+        function showError(message) {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `<div class="error-message">${message}</div>`;
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const messageArea = document.getElementById('messageArea');
+            messageArea.innerHTML = `<div class="success-message">${message}</div>`;
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 3000);
+        }
+
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // You can add authentication check here if needed
+            console.log('Cashier billing system loaded');
+        });
+    </script>
+</body>
+</html>

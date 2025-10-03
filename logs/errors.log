@@ -142,3 +142,18 @@ java.lang.RuntimeException: Simulated error for testing
 	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162)
 	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507)
 	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495)
+2025-10-03 16:26:38.197 [main] ERROR org.syos.infrastructure.util.LoggingService - Operation failed: Main Application Loop after 1088ms - Error: No line found
+java.util.NoSuchElementException: No line found
+	at java.base/java.util.Scanner.nextLine(Scanner.java:1677)
+	at org.syos.controller.MainController.run(MainController.java:76)
+	at org.syos.Main.main(Main.java:94)
+2025-10-03 16:26:38.223 [main] ERROR org.syos.infrastructure.util.LoggingService - Error in main application loop
+java.util.NoSuchElementException: No line found
+	at java.base/java.util.Scanner.nextLine(Scanner.java:1677)
+	at org.syos.controller.MainController.run(MainController.java:76)
+	at org.syos.Main.main(Main.java:94)
+2025-10-03 16:26:38.224 [main] ERROR org.syos.infrastructure.util.LoggingService - Fatal error starting application
+java.util.NoSuchElementException: No line found
+	at java.base/java.util.Scanner.nextLine(Scanner.java:1677)
+	at org.syos.controller.MainController.run(MainController.java:76)
+	at org.syos.Main.main(Main.java:94)

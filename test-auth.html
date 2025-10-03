@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Authentication</title>
+</head>
+<body>
+    <h1>Test SYOS POS Authentication</h1>
+    
+    <button onclick="testAuth()">Test Manager Login</button>
+    <div id="result"></div>
+
+    <script>
+    async function testAuth() {
+        const resultDiv = document.getElementById('result');
+        
+        try {
+            const response = await fetch('http://localhost:8080/syos-pos/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: 'manager',
+                    password: 'demo123',
+                    userType: 'MANAGER'
+                })
+            });
+            
+            const data = await response.text();
+            resultDiv.innerHTML = `<h3>Response:</h3><pre>${data}</pre>`;
+            
+        } catch (error) {
+            resultDiv.innerHTML = `<h3>Error:</h3><pre>${error.message}</pre>`;
+        }
+    }
+    </script>
+</body>
+</html>
