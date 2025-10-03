@@ -12,7 +12,7 @@ public class DBConnection {
     private static DBConnection instance;
     private static final Object lock = new Object();
 
-    // H2 Database configuration
+    
     private final String url = "jdbc:mysql://localhost:3306/syos_pos";
     private final String username = "root";
     private final String password = "9900@tahir";
