@@ -10,10 +10,6 @@ import org.syos.infrastructure.util.LoggingService;
 
 import java.util.Scanner;
 
-/**
- * Main application entry point.
- * Dependency Injection and wiring of components.
- */
 public class Main {
 
         public static void main(String[] args) {
